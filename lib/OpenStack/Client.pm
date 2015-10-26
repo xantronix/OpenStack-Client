@@ -34,12 +34,18 @@ sub service ($$%) {
 
     die("No service endpoint '$name' found") unless defined $self->{'endpoints'}->{$name};
 
-    if (!$opts{'public'} && !$opts{'internal'} && !$opts{'admin'}) {
-        die('Neither "public", "internal" or "admin" specified in options');
-    }
-
     if (defined $self->{'clients'}->{$name}) {
         return  $self->{'clients'}->{$name};
+    }
+
+    if (defined $opts{'uri'}) {
+        return $self->{'clients'}->{$name} = OpenStack::Client::Base->new($opts{'uri'},
+            'token' => $self->{'token'}
+        );
+    }
+
+    if (!$opts{'public'} && !$opts{'internal'} && !$opts{'admin'}) {
+        die('Neither "public", "internal" or "admin" specified in options');
     }
 
     foreach my $endpoint (@{$self->{'endpoints'}->{$name}}) {
