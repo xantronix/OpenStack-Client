@@ -14,8 +14,6 @@ sub new ($%) {
 
     die('No API endpoint provided') unless $endpoint;
 
-    $opts{'access'} ||= {};
-
     my $ua = LWP::UserAgent->new(
         'ssl_opts' => {
             'verify_hostname' => 0
@@ -25,7 +23,7 @@ sub new ($%) {
     return bless {
         'ua'       => $ua,
         'endpoint' => $endpoint,
-        'access'   => $opts{'access'}
+        'token'    => $opts{'token'}
     }, $class;
 }
 
@@ -54,9 +52,9 @@ sub request ($$$$$) {
         'Content-Type'    => 'application/json'
     );
 
-    if (defined $self->{'access'}->{'token'}->{'id'}) {
+    if (defined $self->{'token'}->{'id'}) {
         push @{$headers}, (
-            'X-Auth-Token' => $self->{'access'}->{'token'}->{'id'}
+            'X-Auth-Token' => $self->{'token'}->{'id'}
         );
     }
 
