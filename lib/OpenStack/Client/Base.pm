@@ -49,14 +49,15 @@ sub request ($$$$$) {
     );
 
     push @{$headers}, (
-        'Accept'       => 'application/json',
-        'Content-Type' => 'application/json'
+        'Accept'          => 'application/json, text/plain',
+        'Accept-Encoding' => 'identity, gzip, deflate, compress',
+        'Content-Type'    => 'application/json'
     );
 
     if (defined $self->{'access'}->{'token'}->{'id'}) {
         push @{$headers}, (
             'X-Auth-Token' => $self->{'access'}->{'token'}->{'id'}
-        )
+        );
     }
 
     my $count = scalar @{$headers};
