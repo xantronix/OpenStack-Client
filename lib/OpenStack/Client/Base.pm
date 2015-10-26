@@ -80,7 +80,7 @@ sub request ($$$$$) {
     my $type = $response->header('Content-Type');
 
     if ($response->code =~ /^2\d{2}$/) {
-        die("Unexpected response type $type") unless lc $type eq 'application/json';
+        die("Unexpected response type $type") unless lc $type =~ qr{^application/json};
 
         return JSON::XS::decode_json($response->decoded_content);
     }
