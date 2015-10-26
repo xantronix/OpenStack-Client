@@ -34,7 +34,7 @@ sub service ($$) {
 }
 
 sub auth ($$$) {
-    my ($self, $username, $password) = @_;
+    my ($self, %opts) = @_;
 
     return $self->{'access'} if defined $self->{'access'};
 
@@ -42,10 +42,10 @@ sub auth ($$$) {
 
     my $response = $service->request('POST' => '/tokens', [], {
         'auth' => {
-            'tenantName'          => '',
+            'tenantName'          => $opts{'tenant'},
             'passwordCredentials' => {
-                'username' => $username,
-                'password' => $password
+                'username' => $opts{'username'},
+                'password' => $opts{'password'}
             }
         }
     });
