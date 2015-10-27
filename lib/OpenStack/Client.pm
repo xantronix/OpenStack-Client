@@ -59,8 +59,6 @@ sub service ($$%) {
         $uri = $endpoint->{'internalURL'} if $opts{'internal'};
         $uri = $endpoint->{'adminURL'}    if $opts{'admin'};
 
-        $uri .= "/$opts{'version'}" if defined $opts{'version'};
-
         return $self->{'clients'}->{$name} = OpenStack::Client::Base->new($uri,
             'token' => $self->{'token'}
         );
