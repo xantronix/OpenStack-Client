@@ -76,7 +76,7 @@ sub auth ($$$) {
 
     my $auth = $self->{'auth'};
 
-    my $response = $auth->request('POST' => '/tokens', [], {
+    my $response = $auth->call('POST' => '/tokens', {
         'auth' => {
             'tenantName'          => $opts{'tenant'},
             'passwordCredentials' => {

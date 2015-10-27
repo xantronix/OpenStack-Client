@@ -37,48 +37,41 @@ sub uri ($$$) {
     } $self->{'endpoint'}, $path;
 }
 
-sub request ($$$$$) {
-    my ($self, $method, $path, $headers, $body) = @_;
-
-    $headers ||= [];
+sub call ($$$$) {
+    my ($self, $method, $path, $body) = @_;
 
     my $request = HTTP::Request->new(
         $method => $self->uri($path)
     );
 
-    push @{$headers}, (
+    my @headers = (
         'Accept'          => 'application/json, text/plain',
         'Accept-Encoding' => 'identity, gzip, deflate, compress',
         'Content-Type'    => 'application/json'
     );
 
-    if (defined $self->{'token'}->{'id'}) {
-        push @{$headers}, (
-            'X-Auth-Token' => $self->{'token'}->{'id'}
-        );
-    }
+    push @headers, (
+        'X-Auth-Token' => $self->{'token'}->{'id'}
+    ) if defined $self->{'token'}->{'id'};
 
-    my $count = scalar @{$headers};
+    my $count = scalar @headers;
 
     die('Uneven number of header elements') if $count % 2 != 0;
 
     for (my $i=0; $i<$count; $i+=2) {
-        my $name  = $headers->[$i];
-        my $value = $headers->[$i+1];
+        my $name  = $headers[$i];
+        my $value = $headers[$i+1];
 
         $request->header($name => $value);
     }
 
-    if (defined $body) {
-        $request->content(JSON::XS::encode_json($body));
-    }
+    $request->content(JSON::XS::encode_json($body)) if defined $body;
 
     my $response = $self->{'ua'}->request($request);
-
-    my $type = $response->header('Content-Type');
+    my $type     = $response->header('Content-Type');
 
     if ($response->code =~ /^2\d{2}$/) {
-        die("Unexpected response type $type") unless lc $type =~ qr{^application/json};
+        die("Unexpected response type $type") unless lc $type =~ qr{^application/json}i;
 
         return JSON::XS::decode_json($response->decoded_content);
     }
