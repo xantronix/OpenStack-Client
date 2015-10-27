@@ -82,4 +82,18 @@ sub call ($$$$) {
     return $response->message;
 }
 
+sub each ($$$) {
+    my ($self, $path, $callback) = @_;
+
+    while (defined $path) {
+        my $result = $self->call('GET' => $path);
+
+        $callback->($result);
+
+        $path = $result->{'next'};
+    }
+
+    return;
+}
+
 1;
