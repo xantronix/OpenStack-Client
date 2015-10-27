@@ -6,7 +6,6 @@ use warnings;
 use HTTP::Request  ();
 use LWP::UserAgent ();
 
-use POSIX    ();
 use JSON::XS ();
 
 sub new ($%) {
