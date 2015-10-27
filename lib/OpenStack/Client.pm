@@ -67,6 +67,18 @@ sub service ($$%) {
     die("Could not find endpoint '$name'");
 }
 
+sub token ($) {
+    my ($self) = @_;
+
+    die('Not authenticated') unless defined $self->{'token'};
+
+    return $self->{'token'};
+}
+
+sub tenant ($) {
+    shift->token->{'tenant'};
+}
+
 sub auth ($$$) {
     my ($self, %opts) = @_;
 
