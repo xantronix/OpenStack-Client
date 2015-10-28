@@ -26,6 +26,10 @@ sub new ($%) {
     }, $class;
 }
 
+sub endpoint ($) {
+    shift->{'endpoint'};
+}
+
 sub uri ($$$) {
     my ($self, $path) = @_;
 
