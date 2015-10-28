@@ -68,7 +68,7 @@ sub service ($$%) {
 }
 
 sub services ($) {
-    return sort keys %{$self->{'endpoints'}};
+    return sort keys %{shift->{'endpoints'}};
 }
 
 sub token ($) {
