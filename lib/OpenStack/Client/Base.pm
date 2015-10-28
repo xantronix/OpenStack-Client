@@ -6,7 +6,8 @@ use warnings;
 use HTTP::Request  ();
 use LWP::UserAgent ();
 
-use JSON::XS ();
+use JSON::XS    ();
+use URI::Encode ();
 
 sub new ($%) {
     my ($class, $endpoint, %opts) = @_;
@@ -86,11 +87,41 @@ sub call ($$$$) {
     return $response->message;
 }
 
+sub get ($$%) {
+    my ($self, $path, %opts) = @_;
+
+    my $params;
+
+    foreach my $name (sort keys %opts) {
+        my $value = $opts{$name};
+
+        $params .= "&" if defined $params;
+
+        $params .= sprintf "%s=%s", map {
+            URI::Encode::uri_encode($_)
+        } $name, $value;
+    }
+
+    if (defined $params) {
+        #
+        # $path might already have request parameters; if so, just append
+        # subsequent values with a & rather than ?.
+        #
+        if ($path =~ /\?/) {
+            $path .= "&$params"
+        } else {
+            $path .= "?$params";
+        }
+    }
+
+    return $self->call('GET' => $path);
+}
+
 sub each ($$$) {
     my ($self, $path, $callback) = @_;
 
     while (defined $path) {
-        my $result = $self->call('GET' => $path);
+        my $result = $self->get($path);
 
         $callback->($result);
 
