@@ -67,6 +67,10 @@ sub service ($$%) {
     die("Could not find endpoint '$name'");
 }
 
+sub services ($) {
+    return sort keys %{$self->{'endpoints'}};
+}
+
 sub token ($) {
     my ($self) = @_;
 
