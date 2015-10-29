@@ -118,10 +118,21 @@ sub get ($$%) {
 }
 
 sub each ($$$) {
-    my ($self, $path, $callback) = @_;
+    my ($self, $path, @args) = @_;
+
+    my $opts = {};
+    my $callback;
+
+    if (scalar @args == 2) {
+        ($opts, $callback) = @args;
+    } elsif (scalar @args == 1) {
+        ($callback) = @args;
+    } else {
+        die('Invalid number of arguments');
+    }
 
     while (defined $path) {
-        my $result = $self->get($path);
+        my $result = $self->get($path, %{$opts});
 
         $callback->($result);
 
