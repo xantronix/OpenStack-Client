@@ -166,6 +166,9 @@ I<$name> is returned instead.
 When specified (and set to 1), a client is opened for the public endpoint
 corresponding to service I<$name>.
 
+Without this, or any other values specified, a client for the public endpoint is
+returned by default.
+
 =item * B<internal>
 
 When specified (and set to 1), a client is opened for the internal endpoint
