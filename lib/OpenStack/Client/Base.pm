@@ -251,6 +251,10 @@ sub each ($$@) {
 
 =back
 
+=head1 AUTHOR
+
+Written by Alexandra Hrefna Hilmisdóttir <xan@cpanel.net>
+
 =cut
 
 1;
