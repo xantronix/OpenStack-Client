@@ -17,6 +17,8 @@ OpenStack::Client::Base - Base REST JSON service client
 
 =head1 SYNOPSIS
 
+    use OpenStack::Client::Base ();
+
     my $client = OpenStack::Client::Base->new('http://glance.foo.bar:9292',
         'token' => $token
     );

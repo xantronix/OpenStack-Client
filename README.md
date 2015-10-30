@@ -4,6 +4,8 @@ OpenStack::Client - A reasonable OpenStack client
 
 # SYNOPSIS
 
+    use OpenStack::Client ();
+
     my $client = OpenStack::Client->new('http://openstack.foo.bar:5000/v2.0');
 
     $client->auth(
