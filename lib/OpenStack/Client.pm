@@ -3,11 +3,6 @@ package OpenStack::Client;
 use strict;
 use warnings;
 
-use JSON::XS ();
-
-use HTTP::Request  ();
-use LWP::UserAgent ();
-
 use OpenStack::Client::Base ();
 
 our $VERSION = 0.0001;
