@@ -186,6 +186,11 @@ service:
 When specified, use a specific URI to gain access to a named service endpoint.
 This might be useful for non-production development or testing scenarios.
 
+=item * B<id>
+
+When specified, attempt to obtain a client for the very endpoint indicated by
+that identifier.
+
 =item * B<region>
 
 When specified, attempt to obtain a client for the endpoint for that region.
@@ -240,9 +245,8 @@ sub service ($$%) {
     }
 
     foreach my $endpoint (@{$self->{'endpoints'}->{$name}}) {
-        if (defined $opts{'region'} && $endpoint->{'region'} ne $opts{'region'}) {
-            next;
-        }
+        next if defined $opts{'id'}     && $endpoint->{'id'}     ne $opts{'id'};
+        next if defined $opts{'region'} && $endpoint->{'region'} ne $opts{'region'};
 
         my $uri;
 
