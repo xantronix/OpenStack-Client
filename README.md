@@ -105,6 +105,10 @@ convenience.
         When specified (and set to 1), a client is opened for the administrative
         endpoint corresponding to service _$name_.
 
+# SEE ALSO
+
+- [OpenStack::Client::Base](https://metacpan.org/pod/OpenStack::Client::Base) - The HTTP interface to a OpenStack service
+
 # AUTHOR
 
 Written by Alexandra Hrefna Hilmisdóttir &lt;xan@cpanel.net>

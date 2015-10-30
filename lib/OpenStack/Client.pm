@@ -253,6 +253,14 @@ sub service ($$%) {
 
 =back
 
+=head1 SEE ALSO
+
+=over
+
+=item * L<OpenStack::Client::Base> - The HTTP interface to a OpenStack service
+
+=back
+
 =head1 AUTHOR
 
 Written by Alexandra Hrefna Hilmisdóttir <xan@cpanel.net>
