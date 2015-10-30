@@ -10,6 +10,8 @@ use LWP::UserAgent ();
 
 use OpenStack::Client::Base ();
 
+our $VERSION = 0.0001;
+
 =encoding utf8
 
 =head1 NAME
