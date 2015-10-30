@@ -10,13 +10,40 @@ use LWP::UserAgent ();
 
 use OpenStack::Client::Base ();
 
+=encoding utf8
+
 =head1 NAME
 
 OpenStack::Client - A reasonable OpenStack client
 
 =head1 SYNOPSIS
 
+    my $client = OpenStack::Client->new('http://openstack.foo.bar:5000/v2.0');
+
+    $client->auth(
+        'tenant'   => $ENV{'OS_TENANT_NAME'},
+        'username' => $ENV{'OS_USERNAME'},
+        'password' => $ENV{'OS_PASSWORD'}
+    );
+
+    my $glance = $client->service('glance',
+        'region' => $ENV{'OS_REGION_NAME'}
+    );
+
 =head1 DESCRIPTION
+
+C<OpenStack::Client> is a no-frills OpenStack API client which provides generic
+access to OpenStack APIs with minimal remote service discovery facilities; with
+a minimal client, the key understanding of the remote services are primarily
+predicated on an understanding of the authoritative OpenStack API documentation:
+
+    http://developer.openstack.org/api-ref.html
+
+Authorization, authentication, and obtaining clients for various sub-services
+such as the OpenStack Compute and Networking APIs is made convenient.  Further,
+some small handling of response body data such as obtaining the full resultset
+of a paginated response is handled by L<OpenStack::Client::Base> for
+convenience.
 
 =head1 INSTANTIATION
 

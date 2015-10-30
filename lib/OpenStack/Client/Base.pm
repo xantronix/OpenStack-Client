@@ -9,6 +9,8 @@ use LWP::UserAgent ();
 use JSON::XS    ();
 use URI::Encode ();
 
+=encoding utf8
+
 =head1 NAME
 
 OpenStack::Client::Base - Base REST JSON service client
