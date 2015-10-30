@@ -181,6 +181,11 @@ service:
 
 =over
 
+=item * B<uri>
+
+When specified, use a specific URI to gain access to a named service endpoint.
+This might be useful for non-production development or testing scenarios.
+
 =item * B<region>
 
 When specified, attempt to obtain a client for the endpoint for that region.
