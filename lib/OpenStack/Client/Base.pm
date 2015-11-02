@@ -291,6 +291,8 @@ sub every ($$$@) {
         foreach my $item (@{$result->{$attribute}}) {
             $callback->($item);
         }
+
+        $path = $result->{'next'};
     }
 
     return;
