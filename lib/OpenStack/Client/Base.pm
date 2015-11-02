@@ -221,10 +221,12 @@ sub get ($$%) {
 
 =item C<$client-E<gt>each(I<$path>, I<$opts>, I<$callback>)>
 
+=item C<$client-E<gt>each(I<$path>, I<$callback>)>
+
 Perform an HTTP GET request for the resource I<$path>, while passing each
 decoded response object to I<$callback> in a single argument.  I<$opts> is taken
 to be a HASH reference containing zero or more key-value pairs to be URL encoded
-as parameters to the GET request.
+as parameters to each GET request made.
 
 =cut
 
@@ -251,6 +253,73 @@ sub each ($$@) {
     }
 
     return;
+}
+
+=item C<$client-E<gt>every(I<$attribute>, I<$path>, I<$opts>, I<$callback>)>
+
+=item C<$client-E<gt>every(I<$attribute>, I<$path>, I<$callback>)>
+
+Perform an HTTP GET request for the resource I<$path>, decoding the result set
+and passing each value within each physical JSON response object's attribute
+named I<$attribute>.  I<$opts> is taken to be a HASH reference containing
+zero or more key-value pairs to be URL encoded as parameters to each GET
+request made.
+
+=cut
+
+sub every ($$$@) {
+    my ($self, $attribute, $path, @args) = @_;
+
+    my $opts = {};
+    my $callback;
+
+    if (scalar @args == 2) {
+        ($opts, $callback) = @args;
+    } elsif (scalar @args == 1) {
+        ($callback) = @args;
+    } else {
+        die('Invalid number of arguments');
+    }
+
+    while (defined $path) {
+        my $result = $self->get($path, %{$opts});
+
+        unless (defined $result->{$attribute}) {
+            die("Response from $path does not contain attribute '$attribute'");
+        }
+
+        foreach my $item (@{$result->{$attribute}}) {
+            $callback->($item);
+        }
+    }
+
+    return;
+}
+
+=item C<$client-E<gt>all(I<$attribute>, I<$path>, I<$opts>)>
+
+=item C<$client-E<gt>all(I<$attribute>, I<$path>)>
+
+Perform a series of HTTP GET requests for the resource I<$path>, decoding the
+result set and returning a list of all items found within each response body's
+attribute named I<$attribute>.  I<$opts> is taken to be a HASH reference
+containing zero or more key-value pairs to be URL encoded as parameters to each
+GET request made.
+
+=cut
+
+sub all ($$$@) {
+    my ($self, $attribute, $path, $opts) = @_;
+
+    my @items;
+
+    $self->every($attribute, $path, $opts, sub {
+        my ($item) = @_;
+
+        push @items, $item;
+    });
+
+    return @items;
 }
 
 =back
