@@ -259,11 +259,11 @@ sub each ($$@) {
 
 =item C<$client-E<gt>every(I<$attribute>, I<$path>, I<$callback>)>
 
-Perform an HTTP GET request for the resource I<$path>, decoding the result set
-and passing each value within each physical JSON response object's attribute
-named I<$attribute>.  I<$opts> is taken to be a HASH reference containing
-zero or more key-value pairs to be URL encoded as parameters to each GET
-request made.
+Perform a series of HTTP GET request for the resource I<$path>, decoding the
+result set and passing each value within each physical JSON response object's
+attribute named I<$attribute>.  I<$opts> is taken to be a HASH reference
+containing zero or more key-value pairs to be URL encoded as parameters to each
+GET request made.
 
 =cut
 
