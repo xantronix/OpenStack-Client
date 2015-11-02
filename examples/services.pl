@@ -3,11 +3,9 @@
 use strict;
 use warnings;
 
-use OpenStack::Client ();
+use OpenStack::Client::Auth ();
 
-my $client = OpenStack::Client->new($ENV{'OS_AUTH_URL'});
-
-$client->auth(
+my $client = OpenStack::Client::Auth->new($ENV{'OS_AUTH_URL'},
     'tenant'   => $ENV{'OS_TENANT_NAME'},
     'username' => $ENV{'OS_USERNAME'},
     'password' => $ENV{'OS_PASSWORD'}

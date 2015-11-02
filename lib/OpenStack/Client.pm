@@ -3,31 +3,51 @@ package OpenStack::Client;
 use strict;
 use warnings;
 
-use OpenStack::Client::Base ();
+use HTTP::Request  ();
+use LWP::UserAgent ();
 
-our $VERSION = 0.0001;
+use JSON::XS    ();
+use URI::Encode ();
+
+our $VERSION = 0.0010;
 
 =encoding utf8
 
 =head1 NAME
 
-OpenStack::Client - A reasonable OpenStack client
+OpenStack::Client - A cute little client to OpenStack services
 
 =head1 SYNOPSIS
 
+    #
+    # Connect directly to an API endpoint by URI
+    #
     use OpenStack::Client ();
 
-    my $client = OpenStack::Client->new('http://openstack.foo.bar:5000/v2.0');
+    my $glance = OpenStack::Client->new('http://glance.foo.bar:9292',
+        'token' => {
+            'id' => 'foo'
+        }
+    );
 
-    $client->auth(
+    my @images = $glance->all('/v2/images', 'images');
+
+    #
+    # Or, connect to an API endpoint via the Keystone authorization service
+    #
+    use OpenStack::Client::Auth ();
+
+    my $auth = OpenStack::Client::Auth->new('http://openstack.foo.bar:5000/v2.0',
         'tenant'   => $ENV{'OS_TENANT_NAME'},
         'username' => $ENV{'OS_USERNAME'},
         'password' => $ENV{'OS_PASSWORD'}
     );
 
-    my $glance = $client->service('glance',
+    my $glance = $auth->service('image',
         'region' => $ENV{'OS_REGION_NAME'}
     );
+
+    my @images = $glance->all('/v2/images', 'images');
 
 =head1 DESCRIPTION
 
@@ -38,228 +58,306 @@ predicated on an understanding of the authoritative OpenStack API documentation:
 
     http://developer.openstack.org/api-ref.html
 
-Authorization, authentication, and obtaining clients for various sub-services
-such as the OpenStack Compute and Networking APIs is made convenient.  Further,
-some small handling of response body data such as obtaining the full resultset
-of a paginated response is handled by L<OpenStack::Client::Base> for
+Authorization, authentication, and access to OpenStack services such as the
+OpenStack Compute and Networking APIs is made convenient by
+L<OpenStack::Client::Auth>.  Further, some small handling of response body data
+such as obtaining the full resultset of a paginated response is handled for
 convenience.
+
+Ordinarily, a client can be obtained conveniently by using the C<services()>
+method on a L<OpenStack::Client::Auth> object.
 
 =head1 INSTANTIATION
 
 =over
 
-=item C<OpenStack::Client-E<gt>new(I<$endpoint>)>
+=item C<OpenStack::Client-E<gt>new(I<$endpoint>, I<%opts>)>
 
-Create a new OpenStack client interface to the specified Keystone authentication
-and authorization I<$endpoint>.
+Create a new C<OpenStack::Client> object connected to the specified
+I<$endpoint>.  The following values may be specified in I<%opts>:
+
+=over
+
+=item * B<token>
+
+A token obtained from a L<OpenStack::Client::Auth> object.
+
+=back
 
 =cut
 
 sub new ($%) {
-    my ($class, $endpoint) = @_;
+    my ($class, $endpoint, %opts) = @_;
 
-    die('No API authentication endpoint provided') unless $endpoint;
+    die('No API endpoint provided') unless $endpoint;
+
+    my $ua = LWP::UserAgent->new(
+        'ssl_opts' => {
+            'verify_hostname' => 0
+        }
+    );
 
     return bless {
-        'endpoints' => {},
-        'clients'   => {},
-        'token'     => undef,
-        'auth'      => OpenStack::Client::Base->new($endpoint)
+        'ua'       => $ua,
+        'endpoint' => $endpoint,
+        'token'    => $opts{'token'}
     }, $class;
 }
 
 =back
 
-=head1 AUTHORIZING WITH KEYSTONE
+=head1 INSTANCE METHODS
+
+These methods are useful for identifying key attributes of an OpenStack service
+endpoint client.
 
 =over
 
-=item C<$client-E<gt>auth(I<%args>)>
+=item C<$client-E<gt>endpoint()>
 
-Obtain an authorization token with the OpenStack Keystone service with the
-parameters specified in I<%args>.  The following arguments are required:
-
-=over
-
-=item * B<tenant>
-
-The OpenStack tenant (project) name
-
-=item * B<username>
-
-The OpenStack user name
-
-=item * B<password>
-
-The OpenStack password
-
-=back
-
-When successful, this method will return the Keystone authorization token found
-within the response body, and will allow the C<$client-E<gt>service()> method to
-access the endpoints the client has subsequently gained access to.
-
-After a successful call to this method, subsequent calls will simply return the
-existing authorization token data.
+Return the absolute HTTP URI to the endpoint this client provides access to.
 
 =cut
 
-sub auth ($%) {
-    my ($self, %args) = @_;
-
-    die('No OpenStack tenant name provided in "tenant"') unless defined $args{'tenant'};
-    die('No OpenStack username provided in "username"')  unless defined $args{'username'};
-    die('No OpenSTack password provided in "password"')  unless defined $args{'password'};
-
-    return $self->{'token'} if defined $self->{'token'};
-
-    my $auth = $self->{'auth'};
-
-    my $response = $auth->call('POST' => '/tokens', {
-        'auth' => {
-            'tenantName'          => $args{'tenant'},
-            'passwordCredentials' => {
-                'username' => $args{'username'},
-                'password' => $args{'password'}
-            }
-        }
-    });
-
-    my $access = $response->{'access'};
-
-    die('No token found in response') unless defined $access->{'token'}->{'id'};
-
-    #
-    # Create a new client object for each endpoint listed in the service
-    # catalog, and store the token alongside
-    #
-    foreach my $service (@{$access->{'serviceCatalog'}}) {
-        my $name = $service->{'name'};
-
-        $self->{'endpoints'}->{$name} = $service->{'endpoints'};
-    }
-
-    return $self->{'token'} = $access->{'token'};
+sub endpoint ($) {
+    shift->{'endpoint'};
 }
 
 =item C<$client-E<gt>token()>
 
-Return an authorization token obtained from the last successful Keystone
-authentication.
+If a token object was specified when creating C<$client>, then return it.
 
 =cut
 
 sub token ($) {
-    my ($self) = @_;
+    shift->{'token'};
+}
 
-    die('Not authenticated') unless defined $self->{'token'};
+sub uri ($$$) {
+    my ($self, $path) = @_;
 
-    return $self->{'token'};
+    return join '/', map {
+        s/^\///;
+        s/\/$//;
+        $_
+    } $self->{'endpoint'}, $path;
 }
 
 =back
 
-=head1 CONNECTING TO OPENSTACK SERVICES
+=head1 PERFORMING REMOTE CALLS
 
 =over
 
-=item C<$client-E<gt>services()>
+=item C<$client-E<gt>call(I<$method>, I<$path>, I<$body>)>
 
-Return a list of service names C<$client> is authorized to access.
-
-=cut
-
-sub services ($) {
-    return sort keys %{shift->{'endpoints'}};
-}
-
-=item C<$client-E<gt>service(I<$name>, I<%opts>)>
-
-Obtain a client to the OpenStack service I<$name>.  The following values may be
-specified in I<%opts> to help locate the most appropriate endpoint for a given
-service:
+Perform a call to the service endpoint using the HTTP method I<$method>,
+accessing the resource I<$path> (relative to the absolute endpoint URI), passing
+an arbitrary value in I<$body> that is to be encoded to JSON as a request
+body.  This method may return the following:
 
 =over
 
-=item * B<uri>
+=item For B<application/json>: A decoded JSON object
 
-When specified, use a specific URI to gain access to a named service endpoint.
-This might be useful for non-production development or testing scenarios.
-
-=item * B<id>
-
-When specified, attempt to obtain a client for the very endpoint indicated by
-that identifier.
-
-=item * B<region>
-
-When specified, attempt to obtain a client for the endpoint for that region.
-When not specified, the a client for the first endpoint found for service
-I<$name> is returned instead.
-
-=item * B<public>
-
-When specified (and set to 1), a client is opened for the public endpoint
-corresponding to service I<$name>.
-
-Without this, or any other values specified, a client for the public endpoint is
-returned by default.
-
-=item * B<internal>
-
-When specified (and set to 1), a client is opened for the internal endpoint
-corresponding to service I<$name>.
-
-=item * B<admin>
-
-When specified (and set to 1), a client is opened for the administrative
-endpoint corresponding to service I<$name>.
+=item For other response types: The unmodified response body
 
 =back
 
+In exceptional conditions (such as when the service returns a 4xx or 5xx HTTP
+response), the client will C<die()> with the raw text response from the HTTP
+service, indicating the nature of the service-side failure to service the
+current call.
+
 =cut
 
-sub service ($$%) {
-    my ($self, $name, %opts) = @_;
+sub call ($$$$) {
+    my ($self, $method, $path, $body) = @_;
 
-    die('Not authenticated') unless defined $self->{'token'};
+    my $request = HTTP::Request->new(
+        $method => $self->uri($path)
+    );
 
-    $opts{'public'}   ||= 1;
-    $opts{'internal'} ||= 0;
-    $opts{'admin'}    ||= 0;
+    my @headers = (
+        'Accept'          => 'application/json, text/plain',
+        'Accept-Encoding' => 'identity, gzip, deflate, compress',
+        'Content-Type'    => 'application/json'
+    );
 
-    die("No service endpoint '$name' found") unless defined $self->{'endpoints'}->{$name};
+    push @headers, (
+        'X-Auth-Token' => $self->{'token'}->{'id'}
+    ) if defined $self->{'token'}->{'id'};
 
-    if (defined $self->{'clients'}->{$name}) {
-        return  $self->{'clients'}->{$name};
+    my $count = scalar @headers;
+
+    die('Uneven number of header elements') if $count % 2 != 0;
+
+    for (my $i=0; $i<$count; $i+=2) {
+        my $name  = $headers[$i];
+        my $value = $headers[$i+1];
+
+        $request->header($name => $value);
     }
 
-    if (defined $opts{'uri'}) {
-        return $self->{'clients'}->{$name} = OpenStack::Client::Base->new($opts{'uri'},
-            'token' => $self->{'token'}
-        );
+    $request->content(JSON::XS::encode_json($body)) if defined $body;
+
+    my $response = $self->{'ua'}->request($request);
+    my $type     = $response->header('Content-Type');
+
+    if ($response->code =~ /^2\d{2}$/) {
+        die("Unexpected response type $type") unless lc $type =~ qr{^application/json}i;
+
+        return JSON::XS::decode_json($response->decoded_content);
     }
 
-    if (!$opts{'public'} && !$opts{'internal'} && !$opts{'admin'}) {
-        die('Neither "public", "internal" or "admin" specified in options');
+    if ($response->code =~ /^[45]\d{2}$/) {
+        die($response->decoded_content);
     }
 
-    foreach my $endpoint (@{$self->{'endpoints'}->{$name}}) {
-        next if defined $opts{'id'}     && $endpoint->{'id'}     ne $opts{'id'};
-        next if defined $opts{'region'} && $endpoint->{'region'} ne $opts{'region'};
+    return $response->message;
+}
 
-        my $uri;
+=item C<$client-E<gt>get(I<$path>, I<%opts>)>
 
-        $uri = $endpoint->{'publicURL'}   if $opts{'public'};
-        $uri = $endpoint->{'internalURL'} if $opts{'internal'};
-        $uri = $endpoint->{'adminURL'}    if $opts{'admin'};
+Perform an HTTP GET request for resource I<$path>.  The keys and values
+specified in I<%opts> will be URL encoded and appended to I<$path> when forming
+the request.  Response bodies are decoded as per C<$client-E<gt>call()>.
 
-        return $self->{'clients'}->{$name} = OpenStack::Client::Base->new($uri,
-            'token' => $self->{'token'}
-        );
+=cut
+
+sub get ($$%) {
+    my ($self, $path, %opts) = @_;
+
+    my $params;
+
+    foreach my $name (sort keys %opts) {
+        my $value = $opts{$name};
+
+        $params .= "&" if defined $params;
+
+        $params .= sprintf "%s=%s", map {
+            URI::Encode::uri_encode($_)
+        } $name, $value;
     }
 
-    die("Could not find endpoint '$name'");
+    if (defined $params) {
+        #
+        # $path might already have request parameters; if so, just append
+        # subsequent values with a & rather than ?.
+        #
+        if ($path =~ /\?/) {
+            $path .= "&$params"
+        } else {
+            $path .= "?$params";
+        }
+    }
+
+    return $self->call('GET' => $path);
+}
+
+=item C<$client-E<gt>each(I<$path>, I<$opts>, I<$callback>)>
+
+=item C<$client-E<gt>each(I<$path>, I<$callback>)>
+
+Perform an HTTP GET request for the resource I<$path>, while passing each
+decoded response object to I<$callback> in a single argument.  I<$opts> is taken
+to be a HASH reference containing zero or more key-value pairs to be URL encoded
+as parameters to each GET request made.
+
+=cut
+
+sub each ($$@) {
+    my ($self, $path, @args) = @_;
+
+    my $opts = {};
+    my $callback;
+
+    if (scalar @args == 2) {
+        ($opts, $callback) = @args;
+    } elsif (scalar @args == 1) {
+        ($callback) = @args;
+    } else {
+        die('Invalid number of arguments');
+    }
+
+    while (defined $path) {
+        my $result = $self->get($path, %{$opts});
+
+        $callback->($result);
+
+        $path = $result->{'next'};
+    }
+
+    return;
+}
+
+=item C<$client-E<gt>every(I<$path>, I<$attribute>, I<$opts>, I<$callback>)>
+
+=item C<$client-E<gt>every(I<$path>, I<$attribute>, I<$callback>)>
+
+Perform a series of HTTP GET request for the resource I<$path>, decoding the
+result set and passing each value within each physical JSON response object's
+attribute named I<$attribute>.  I<$opts> is taken to be a HASH reference
+containing zero or more key-value pairs to be URL encoded as parameters to each
+GET request made.
+
+=cut
+
+sub every ($$$@) {
+    my ($self, $path, $attribute, @args) = @_;
+
+    my $opts = {};
+    my $callback;
+
+    if (scalar @args == 2) {
+        ($opts, $callback) = @args;
+    } elsif (scalar @args == 1) {
+        ($callback) = @args;
+    } else {
+        die('Invalid number of arguments');
+    }
+
+    while (defined $path) {
+        my $result = $self->get($path, %{$opts});
+
+        unless (defined $result->{$attribute}) {
+            die("Response from $path does not contain attribute '$attribute'");
+        }
+
+        foreach my $item (@{$result->{$attribute}}) {
+            $callback->($item);
+        }
+
+        $path = $result->{'next'};
+    }
+
+    return;
+}
+
+=item C<$client-E<gt>all(I<$path>, I<$attribute>, I<$opts>)>
+
+=item C<$client-E<gt>all(I<$path>, I<$attribute>)>
+
+Perform a series of HTTP GET requests for the resource I<$path>, decoding the
+result set and returning a list of all items found within each response body's
+attribute named I<$attribute>.  I<$opts> is taken to be a HASH reference
+containing zero or more key-value pairs to be URL encoded as parameters to each
+GET request made.
+
+=cut
+
+sub all ($$$@) {
+    my ($self, $path, $attribute, $opts) = @_;
+
+    my @items;
+
+    $self->every($path, $attribute, $opts, sub {
+        my ($item) = @_;
+
+        push @items, $item;
+    });
+
+    return @items;
 }
 
 =back
@@ -268,7 +366,9 @@ sub service ($$%) {
 
 =over
 
-=item * L<OpenStack::Client::Base> - The HTTP interface to a OpenStack service
+=item L<OpenStack::Client::Auth>
+
+The OpenStack Keystone authentication and authorization interface
 
 =back
 

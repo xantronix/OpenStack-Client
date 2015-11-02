@@ -1,22 +1,38 @@
 # NAME
 
-OpenStack::Client - A reasonable OpenStack client
+OpenStack::Client - A cute little client to OpenStack services
 
 # SYNOPSIS
 
+    #
+    # Connect directly to an API endpoint by URI
+    #
     use OpenStack::Client ();
 
-    my $client = OpenStack::Client->new('http://openstack.foo.bar:5000/v2.0');
+    my $glance = OpenStack::Client->new('http://glance.foo.bar:9292',
+        'token' => {
+            'id' => 'foo'
+        }
+    );
 
-    $client->auth(
+    my @images = $glance->all('/v2/images', 'images');
+
+    #
+    # Or, connect to an API endpoint via the Keystone authorization service
+    #
+    use OpenStack::Client::Auth ();
+
+    my $auth = OpenStack::Client::Auth->new('http://openstack.foo.bar:5000/v2.0',
         'tenant'   => $ENV{'OS_TENANT_NAME'},
         'username' => $ENV{'OS_USERNAME'},
         'password' => $ENV{'OS_PASSWORD'}
     );
 
-    my $glance = $client->service('glance',
+    my $glance = $auth->service('image',
         'region' => $ENV{'OS_REGION_NAME'}
     );
+
+    my @images = $glance->all('/v2/images', 'images');
 
 # DESCRIPTION
 
@@ -27,94 +43,93 @@ predicated on an understanding of the authoritative OpenStack API documentation:
 
     http://developer.openstack.org/api-ref.html
 
-Authorization, authentication, and obtaining clients for various sub-services
-such as the OpenStack Compute and Networking APIs is made convenient.  Further,
-some small handling of response body data such as obtaining the full resultset
-of a paginated response is handled by [OpenStack::Client::Base](https://metacpan.org/pod/OpenStack::Client::Base) for
+Authorization, authentication, and access to OpenStack services such as the
+OpenStack Compute and Networking APIs is made convenient by
+[OpenStack::Client::Auth](https://metacpan.org/pod/OpenStack::Client::Auth).  Further, some small handling of response body data
+such as obtaining the full resultset of a paginated response is handled for
 convenience.
+
+Ordinarily, a client can be obtained conveniently by using the `services()`
+method on a [OpenStack::Client::Auth](https://metacpan.org/pod/OpenStack::Client::Auth) object.
 
 # INSTANTIATION
 
-- `OpenStack::Client->new(_$endpoint_)`
+- `OpenStack::Client->new(_$endpoint_, _%opts_)`
 
-    Create a new OpenStack client interface to the specified Keystone authentication
-    and authorization _$endpoint_.
+    Create a new `OpenStack::Client` object connected to the specified
+    _$endpoint_.  The following values may be specified in _%opts_:
 
-# AUTHORIZING WITH KEYSTONE
+    - **token**
 
-- `$client->auth(_%args_)`
+        A token obtained from a [OpenStack::Client::Auth](https://metacpan.org/pod/OpenStack::Client::Auth) object.
 
-    Obtain an authorization token with the OpenStack Keystone service with the
-    parameters specified in _%args_.  The following arguments are required:
+# INSTANCE METHODS
 
-    - **tenant**
+These methods are useful for identifying key attributes of an OpenStack service
+endpoint client.
 
-        The OpenStack tenant (project) name
+- `$client->endpoint()`
 
-    - **username**
-
-        The OpenStack user name
-
-    - **password**
-
-        The OpenStack password
-
-    When successful, this method will return the Keystone authorization token found
-    within the response body, and will allow the `$client->service()` method to
-    access the endpoints the client has subsequently gained access to.
-
-    After a successful call to this method, subsequent calls will simply return the
-    existing authorization token data.
+    Return the absolute HTTP URI to the endpoint this client provides access to.
 
 - `$client->token()`
 
-    Return an authorization token obtained from the last successful Keystone
-    authentication.
+    If a token object was specified when creating `$client`, then return it.
 
-# CONNECTING TO OPENSTACK SERVICES
+# PERFORMING REMOTE CALLS
 
-- `$client->services()`
+- `$client->call(_$method_, _$path_, _$body_)`
 
-    Return a list of service names `$client` is authorized to access.
+    Perform a call to the service endpoint using the HTTP method _$method_,
+    accessing the resource _$path_ (relative to the absolute endpoint URI), passing
+    an arbitrary value in _$body_ that is to be encoded to JSON as a request
+    body.  This method may return the following:
 
-- `$client->service(_$name_, _%opts_)`
+    - For **application/json**: A decoded JSON object
+    - For other response types: The unmodified response body
 
-    Obtain a client to the OpenStack service _$name_.  The following values may be
-    specified in _%opts_ to help locate the most appropriate endpoint for a given
-    service:
+    In exceptional conditions (such as when the service returns a 4xx or 5xx HTTP
+    response), the client will `die()` with the raw text response from the HTTP
+    service, indicating the nature of the service-side failure to service the
+    current call.
 
-    - **uri**
+- `$client->get(_$path_, _%opts_)`
 
-        When specified, use a specific URI to gain access to a named service endpoint.
-        This might be useful for non-production development or testing scenarios.
+    Perform an HTTP GET request for resource _$path_.  The keys and values
+    specified in _%opts_ will be URL encoded and appended to _$path_ when forming
+    the request.  Response bodies are decoded as per `$client->call()`.
 
-    - **region**
+- `$client->each(_$path_, _$opts_, _$callback_)`
+- `$client->each(_$path_, _$callback_)`
 
-        When specified, attempt to obtain a client for the endpoint for that region.
-        When not specified, the a client for the first endpoint found for service
-        _$name_ is returned instead.
+    Perform an HTTP GET request for the resource _$path_, while passing each
+    decoded response object to _$callback_ in a single argument.  _$opts_ is taken
+    to be a HASH reference containing zero or more key-value pairs to be URL encoded
+    as parameters to each GET request made.
 
-    - **public**
+- `$client->every(_$path_, _$attribute_, _$opts_, _$callback_)`
+- `$client->every(_$path_, _$attribute_, _$callback_)`
 
-        When specified (and set to 1), a client is opened for the public endpoint
-        corresponding to service _$name_.
+    Perform a series of HTTP GET request for the resource _$path_, decoding the
+    result set and passing each value within each physical JSON response object's
+    attribute named _$attribute_.  _$opts_ is taken to be a HASH reference
+    containing zero or more key-value pairs to be URL encoded as parameters to each
+    GET request made.
 
-        Without this, or any other values specified, a client for the public endpoint is
-        returned by default.
+- `$client->all(_$path_, _$attribute_, _$opts_)`
+- `$client->all(_$path_, _$attribute_)`
 
-    - **internal**
-
-        When specified (and set to 1), a client is opened for the internal endpoint
-        corresponding to service _$name_.
-
-    - **admin**
-
-        When specified (and set to 1), a client is opened for the administrative
-        endpoint corresponding to service _$name_.
+    Perform a series of HTTP GET requests for the resource _$path_, decoding the
+    result set and returning a list of all items found within each response body's
+    attribute named _$attribute_.  _$opts_ is taken to be a HASH reference
+    containing zero or more key-value pairs to be URL encoded as parameters to each
+    GET request made.
 
 # SEE ALSO
 
-- [OpenStack::Client::Base](https://metacpan.org/pod/OpenStack::Client::Base) - The HTTP interface to a OpenStack service
+- [OpenStack::Client::Auth](https://metacpan.org/pod/OpenStack::Client::Auth)
+
+    The OpenStack Keystone authentication and authorization interface
 
 # AUTHOR
 

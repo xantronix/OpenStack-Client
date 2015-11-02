@@ -1,5 +1,5 @@
 MANIFEST
 Makefile.PL
 README.md
-lib/OpenStack/Client/Base.pm
+lib/OpenStack/Client/Auth.pm
 lib/OpenStack/Client.pm

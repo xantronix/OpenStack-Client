@@ -3,17 +3,15 @@
 use strict;
 use warnings;
 
-use OpenStack::Client ();
+use OpenStack::Client::Auth ();
 
-my $client = OpenStack::Client->new($ENV{'OS_AUTH_URL'});
-
-$client->auth(
+my $auth = OpenStack::Client::Auth->new($ENV{'OS_AUTH_URL'},
     'tenant'   => $ENV{'OS_TENANT_NAME'},
     'username' => $ENV{'OS_USERNAME'},
     'password' => $ENV{'OS_PASSWORD'}
 );
 
-my $glance = $client->service('glance');
+my $glance = $auth->service('image');
 
 $glance->each("/v2/images", sub {
     my ($result) = @_;
