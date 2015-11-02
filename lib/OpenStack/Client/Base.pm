@@ -255,9 +255,9 @@ sub each ($$@) {
     return;
 }
 
-=item C<$client-E<gt>every(I<$attribute>, I<$path>, I<$opts>, I<$callback>)>
+=item C<$client-E<gt>every(I<$path>, I<$attribute>, I<$opts>, I<$callback>)>
 
-=item C<$client-E<gt>every(I<$attribute>, I<$path>, I<$callback>)>
+=item C<$client-E<gt>every(I<$path>, I<$attribute>, I<$callback>)>
 
 Perform a series of HTTP GET request for the resource I<$path>, decoding the
 result set and passing each value within each physical JSON response object's
@@ -268,7 +268,7 @@ GET request made.
 =cut
 
 sub every ($$$@) {
-    my ($self, $attribute, $path, @args) = @_;
+    my ($self, $path, $attribute, @args) = @_;
 
     my $opts = {};
     my $callback;
@@ -298,9 +298,9 @@ sub every ($$$@) {
     return;
 }
 
-=item C<$client-E<gt>all(I<$attribute>, I<$path>, I<$opts>)>
+=item C<$client-E<gt>all(I<$path>, I<$attribute>, I<$opts>)>
 
-=item C<$client-E<gt>all(I<$attribute>, I<$path>)>
+=item C<$client-E<gt>all(I<$path>, I<$attribute>)>
 
 Perform a series of HTTP GET requests for the resource I<$path>, decoding the
 result set and returning a list of all items found within each response body's
@@ -311,11 +311,11 @@ GET request made.
 =cut
 
 sub all ($$$@) {
-    my ($self, $attribute, $path, $opts) = @_;
+    my ($self, $path, $attribute, $opts) = @_;
 
     my @items;
 
-    $self->every($attribute, $path, $opts, sub {
+    $self->every($path, $attribute, $opts, sub {
         my ($item) = @_;
 
         push @items, $item;
