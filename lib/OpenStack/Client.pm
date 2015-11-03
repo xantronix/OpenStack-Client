@@ -20,20 +20,7 @@ OpenStack::Client - A cute little client to OpenStack services
 =head1 SYNOPSIS
 
     #
-    # Connect directly to an API endpoint by URI
-    #
-    use OpenStack::Client ();
-
-    my $glance = OpenStack::Client->new('http://glance.foo.bar:9292',
-        'token' => {
-            'id' => 'foo'
-        }
-    );
-
-    my @images = $glance->all('/v2/images', 'images');
-
-    #
-    # Or, connect to an API endpoint via the Keystone authorization service
+    # First, connect to an API endpoint via the Keystone authorization service
     #
     use OpenStack::Client::Auth ();
 
@@ -45,6 +32,19 @@ OpenStack::Client - A cute little client to OpenStack services
 
     my $glance = $auth->service('image',
         'region' => $ENV{'OS_REGION_NAME'}
+    );
+
+    my @images = $glance->all('/v2/images', 'images');
+
+    #
+    # Or, connect directly to an API endpoint by URI
+    #
+    use OpenStack::Client ();
+
+    my $glance = OpenStack::Client->new('http://glance.foo.bar:9292',
+        'token' => {
+            'id' => 'foo'
+        }
     );
 
     my @images = $glance->all('/v2/images', 'images');
