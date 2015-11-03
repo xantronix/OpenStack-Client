@@ -205,9 +205,11 @@ sub call ($$$$) {
     my $type     = $response->header('Content-Type');
 
     if ($response->code =~ /^2\d{2}$/) {
-        die("Unexpected response type $type") unless lc $type =~ qr{^application/json}i;
-
-        return JSON::XS::decode_json($response->decoded_content);
+        if (lc($type) =~ qr{^application/json}i) {
+            return JSON::XS::decode_json($response->decoded_content);
+        } else {
+            return $response->decoded_content;
+        }
     }
 
     if ($response->code =~ /^[45]\d{2}$/) {
