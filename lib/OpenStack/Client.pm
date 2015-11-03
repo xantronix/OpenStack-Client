@@ -297,9 +297,9 @@ sub each ($$@) {
 
 Perform a series of HTTP GET request for the resource I<$path>, decoding the
 result set and passing each value within each physical JSON response object's
-attribute named I<$attribute>.  I<$opts> is taken to be a HASH reference
-containing zero or more key-value pairs to be URL encoded as parameters to each
-GET request made.
+attribute named I<$attribute>, to the callback I<$callback> as a single
+argument.  I<$opts> is taken to be a HASH reference containing zero or more
+key-value pairs to be URL encoded as parameters to each GET request made.
 
 =cut
 

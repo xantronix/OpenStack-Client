@@ -112,9 +112,9 @@ endpoint client.
 
     Perform a series of HTTP GET request for the resource _$path_, decoding the
     result set and passing each value within each physical JSON response object's
-    attribute named _$attribute_.  _$opts_ is taken to be a HASH reference
-    containing zero or more key-value pairs to be URL encoded as parameters to each
-    GET request made.
+    attribute named _$attribute_, to the callback _$callback_ as a single
+    argument.  _$opts_ is taken to be a HASH reference containing zero or more
+    key-value pairs to be URL encoded as parameters to each GET request made.
 
 - `$client->all(_$path_, _$attribute_, _$opts_)`
 - `$client->all(_$path_, _$attribute_)`
