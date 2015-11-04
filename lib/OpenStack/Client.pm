@@ -158,9 +158,9 @@ body.  This method may return the following:
 
 =over
 
-=item For B<application/json>: A decoded JSON object
+=item * For B<application/json>: A decoded JSON object
 
-=item For other response types: The unmodified response body
+=item * For other response types: The unmodified response body
 
 =back
 
