@@ -219,9 +219,15 @@ sub call ($$$$) {
     return $response->message;
 }
 
+=back
+
+=head1 FETCHING REMOTE RESOURCES
+
+=over
+
 =item C<$client-E<gt>get(I<$path>, I<%opts>)>
 
-Perform an HTTP GET request for resource I<$path>.  The keys and values
+Issue an HTTP GET request for resource I<$path>.  The keys and values
 specified in I<%opts> will be URL encoded and appended to I<$path> when forming
 the request.  Response bodies are decoded as per C<$client-E<gt>call()>.
 
@@ -261,7 +267,7 @@ sub get ($$%) {
 
 =item C<$client-E<gt>each(I<$path>, I<$callback>)>
 
-Perform an HTTP GET request for the resource I<$path>, while passing each
+Issue an HTTP GET request for the resource I<$path>, while passing each
 decoded response object to I<$callback> in a single argument.  I<$opts> is taken
 to be a HASH reference containing zero or more key-value pairs to be URL encoded
 as parameters to each GET request made.
@@ -360,6 +366,56 @@ sub all ($$$@) {
     });
 
     return @items;
+}
+
+=back
+
+=head1 CREATING AND UPDATING REMOTE RESOURCES
+
+=over
+
+=item C<$client-E<gt>put(I<$path>, I<$body>)>
+
+Issue an HTTP PUT request to the resource at I<$path>, in the form of a JSON
+encoding of the contents of I<$body>.
+
+=cut
+
+sub put ($$$) {
+    my ($self, $path, $body) = @_;
+
+    return $self->call('PUT' => $path, $body);
+}
+
+=item C<$client-E<gt>post(I<$path>, I<$body>)>
+
+Issue an HTTP POST request to the resource at I<$path>, in the form of a
+JSON encoding of the contents of I<$body>.
+
+=cut
+
+sub post ($$$) {
+    my ($self, $path, $body) = @_;
+
+    return $self->call('POST' => $path, $body);
+}
+
+=back
+
+=head1 DELETING REMOTE RESOURCES
+
+=over
+
+=item C<$client-E<gt>delete(I<$path>)>
+
+Issue an HTTP DELETE request of the resource at I<$path>.
+
+=cut
+
+sub delete ($$) {
+    my ($self, $path) = @_;
+
+    return $self->call('DELETE' => $path);
 }
 
 =back
