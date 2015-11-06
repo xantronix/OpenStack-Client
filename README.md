@@ -5,20 +5,7 @@ OpenStack::Client - A cute little client to OpenStack services
 # SYNOPSIS
 
     #
-    # Connect directly to an API endpoint by URI
-    #
-    use OpenStack::Client ();
-
-    my $glance = OpenStack::Client->new('http://glance.foo.bar:9292',
-        'token' => {
-            'id' => 'foo'
-        }
-    );
-
-    my @images = $glance->all('/v2/images', 'images');
-
-    #
-    # Or, connect to an API endpoint via the Keystone authorization service
+    # First, connect to an API endpoint via the Keystone authorization service
     #
     use OpenStack::Client::Auth ();
 
@@ -30,6 +17,19 @@ OpenStack::Client - A cute little client to OpenStack services
 
     my $glance = $auth->service('image',
         'region' => $ENV{'OS_REGION_NAME'}
+    );
+
+    my @images = $glance->all('/v2/images', 'images');
+
+    #
+    # Or, connect directly to an API endpoint by URI
+    #
+    use OpenStack::Client ();
+
+    my $glance = OpenStack::Client->new('http://glance.foo.bar:9292',
+        'token' => {
+            'id' => 'foo'
+        }
     );
 
     my @images = $glance->all('/v2/images', 'images');
@@ -93,16 +93,18 @@ endpoint client.
     service, indicating the nature of the service-side failure to service the
     current call.
 
+# FETCHING REMOTE RESOURCES
+
 - `$client->get(_$path_, _%opts_)`
 
-    Perform an HTTP GET request for resource _$path_.  The keys and values
+    Issue an HTTP GET request for resource _$path_.  The keys and values
     specified in _%opts_ will be URL encoded and appended to _$path_ when forming
     the request.  Response bodies are decoded as per `$client->call()`.
 
 - `$client->each(_$path_, _$opts_, _$callback_)`
 - `$client->each(_$path_, _$callback_)`
 
-    Perform an HTTP GET request for the resource _$path_, while passing each
+    Issue an HTTP GET request for the resource _$path_, while passing each
     decoded response object to _$callback_ in a single argument.  _$opts_ is taken
     to be a HASH reference containing zero or more key-value pairs to be URL encoded
     as parameters to each GET request made.
@@ -124,6 +126,24 @@ endpoint client.
     attribute named _$attribute_.  _$opts_ is taken to be a HASH reference
     containing zero or more key-value pairs to be URL encoded as parameters to each
     GET request made.
+
+# CREATING AND UPDATING REMOTE RESOURCES
+
+- `$client->put(_$path_, _$body_)`
+
+    Issue an HTTP PUT request to the resource at _$path_, in the form of a JSON
+    encoding of the contents of _$body_.
+
+- `$client->post(_$path_, _$body_)`
+
+    Issue an HTTP POST request to the resource at _$path_, in the form of a
+    JSON encoding of the contents of _$body_.
+
+# DELETING REMOTE RESOURCES
+
+- `$client->delete(_$path_)`
+
+    Issue an HTTP DELETE request of the resource at _$path_.
 
 # SEE ALSO
 
