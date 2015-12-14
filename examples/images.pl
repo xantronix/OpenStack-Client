@@ -17,6 +17,8 @@ $glance->each("/v2/images", sub {
     my ($result) = @_;
 
     foreach my $image (@{$result->{'images'}}) {
+        $image->{'direct_url'} ||= '(unknown)';
+
         print "$image->{'direct_url'} $image->{'name'}\n";
     }
 });
