@@ -1,3 +1,11 @@
+#
+# Copyright (c) 2015 cPanel, Inc.
+# All rights reserved.
+# http://cpanel.net/
+#
+# Distributed under the terms of the MIT license.  See the LICENSE file for
+# further details.
+#
 package OpenStack::Client::Auth;
 
 use strict;
@@ -86,7 +94,10 @@ sub new ($$%) {
     die('No OpenStack username provided in "username"')  unless defined $args{'username'};
     die('No OpenStack password provided in "password"')  unless defined $args{'password'};
 
-    my $client = OpenStack::Client->new($endpoint);
+    my $client = OpenStack::Client->new($endpoint,
+        'package_ua'      => $args{'package_ua'},
+        'package_request' => $args{'package_request'}
+    );
 
     my $response = $client->call('POST' => '/tokens', {
         'auth' => {
@@ -103,13 +114,11 @@ sub new ($$%) {
     }
 
     return bless {
-        'response' => $response,
-        'clients'  => {},
-        'services' => {
-            map {
-                $_->{'type'} => $_->{'endpoints'}
-            } @{$response->{'access'}->{'serviceCatalog'}}
-        }
+        'package_ua'      => $args{'package_ua'},
+        'package_request' => $args{'package_request'},
+        'response'        => $response,
+        'clients'         => {},
+        'services'        => $response->{'access'}->{'serviceCatalog'}
     }, $class;
 }
 
@@ -174,7 +183,13 @@ Return a list of service types the OpenStack user is authorized to access.
 =cut
 
 sub services ($) {
-    sort keys %{shift->{'services'}};
+    my ($self) = @_;
+
+    my %types = map {
+        $_->{'type'} => 1
+    } @{$self->{'services'}};
+
+    return sort keys %types;
 }
 
 =back
@@ -225,13 +240,11 @@ When specified, attempt to obtain a client for the endpoint for that region.
 When not specified, the a client for the first endpoint found for service
 I<$type> is returned instead.
 
-=item * B<public>
+=item * B<endpoint>
 
-When specified (and set to 1), a client is opened for the public endpoint
-corresponding to service I<$type>.
-
-Without this, or any other values specified, a client for the public endpoint is
-returned by default.
+When specified and set to one of 'public', 'internal' or 'admin', return a
+client for the corresponding public, internal or admin endpoint.  The default
+endpoint is the public endpoint.
 
 =item * B<internal>
 
@@ -250,42 +263,50 @@ endpoint corresponding to service I<$type>.
 sub service ($$%) {
     my ($self, $type, %opts) = @_;
 
-    $opts{'public'}   ||= 1;
-    $opts{'internal'} ||= 0;
-    $opts{'admin'}    ||= 0;
-
-    die("No service type '$type' found") unless defined $self->{'services'}->{$type};
-
     if (defined $self->{'clients'}->{$type}) {
         return  $self->{'clients'}->{$type};
     }
 
     if (defined $opts{'uri'}) {
         return $self->{'clients'}->{$type} = OpenStack::Client->new($opts{'uri'},
-            'token' => $self->token
+            'package_ua'      => $self->{'package_ua'},
+            'package_request' => $self->{'package_request'},
+            'token'           => $self->token
         );
     }
 
-    if (!$opts{'public'} && !$opts{'internal'} && !$opts{'admin'}) {
-        die('Neither "public", "internal" or "admin" specified in options');
+    $opts{'endpoint'} ||= 'public';
+
+    if ($opts{'endpoint'} !~ /^(?:public|internal|admin)$/) {
+        die('Invalid endpoint type specified in "endpoint"');
     }
 
-    foreach my $service (@{$self->{'services'}->{$type}}) {
+    foreach my $service (@{$self->{'services'}}) {
+        next unless $type eq $service->{'type'};
+
         next if defined $opts{'id'}     && $service->{'id'}     ne $opts{'id'};
         next if defined $opts{'region'} && $service->{'region'} ne $opts{'region'};
 
         my $uri;
 
-        $uri = $service->{'publicURL'}   if $opts{'public'};
-        $uri = $service->{'internalURL'} if $opts{'internal'};
-        $uri = $service->{'adminURL'}    if $opts{'admin'};
+        foreach my $endpoint (@{$service->{'endpoints'}}) {
+            if ($opts{'endpoint'} eq 'public') {
+                $uri = $endpoint->{'publicURL'};
+            } elsif ($opts{'endpoint'} eq 'internal') {
+                $uri = $endpoint->{'internalURL'};
+            } elsif ($opts{'endpoint'} eq 'admin') {
+                $uri = $endpoint->{'adminURL'};
+            }
 
-        return $self->{'clients'}->{$type} = OpenStack::Client->new($uri,
-            'token' => $self->token
-        );
+            return $self->{'clients'}->{$type} = OpenStack::Client->new($uri,
+                'package_ua'      => $self->{'package_ua'},
+                'package_request' => $self->{'package_request'},
+                'token'           => $self->token
+            );
+        }
     }
 
-    die("Could not find appropriate endpoint for service type '$type'");
+    die("No service type '$type' found");
 }
 
 =back
@@ -293,6 +314,11 @@ sub service ($$%) {
 =head1 AUTHOR
 
 Written by Alexandra Hrefna Hilmisdóttir <xan@cpanel.net>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2015 cPanel, Inc.  Released under the terms of the MIT license.
+See LICENSE for further details.
 
 =cut
 
