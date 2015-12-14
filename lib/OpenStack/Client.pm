@@ -10,6 +10,7 @@ use JSON::XS    ();
 use URI::Encode ();
 
 our $VERSION = 0.0010;
+our $HTTP_UA = 'LWP::UserAgent';
 
 =encoding utf8
 
@@ -91,7 +92,7 @@ sub new ($%) {
 
     die('No API endpoint provided') unless $endpoint;
 
-    my $ua = LWP::UserAgent->new(
+    my $ua = $HTTP_UA->new(
         'ssl_opts' => {
             'verify_hostname' => 0
         }
