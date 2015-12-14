@@ -5,3 +5,4 @@ examples/images.pl
 examples/services.pl
 lib/OpenStack/Client/Auth.pm
 lib/OpenStack/Client.pm
+t/client.t
