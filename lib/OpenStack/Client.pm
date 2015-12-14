@@ -10,7 +10,9 @@ use JSON::XS    ();
 use URI::Encode ();
 
 our $VERSION = 0.0010;
-our $HTTP_UA = 'LWP::UserAgent';
+
+our $HTTP_UA      = 'LWP::UserAgent';
+our $HTTP_REQUEST = 'HTTP::Request';
 
 =encoding utf8
 
@@ -175,7 +177,7 @@ current call.
 sub call ($$$$) {
     my ($self, $method, $path, $body) = @_;
 
-    my $request = HTTP::Request->new(
+    my $request = $HTTP_REQUEST->new(
         $method => $self->uri($path)
     );
 
