@@ -11,7 +11,7 @@
 use strict;
 use warnings;
 
-use JSON::XS ();
+use JSON ();
 
 use OpenStack::Client::Auth ();
 
@@ -67,7 +67,7 @@ Test::OpenStack::Client->run_client_tests({
     }
 });
 
-my $full_content = JSON::XS::encode_json({
+my $full_content = JSON::encode_json({
     'access' => {
         'token' => {
             'id' => 'abc123'
@@ -118,7 +118,7 @@ Test::OpenStack::Client->run_auth_tests({
         } "\$auth->service() doesn't die when expected to return client for default endpoint for requested service";
 
         {
-            my $got      = JSON::XS::decode_json($ua->{'requests'}->[0]->content);
+            my $got      = JSON::decode_json($ua->{'requests'}->[0]->content);
             my $expected = {
                 'auth' => {
                     'tenantName'          => $test_credentials{'tenant'},
@@ -132,7 +132,7 @@ Test::OpenStack::Client->run_auth_tests({
             is_deeply($got => $expected, "OpenStack::Client::Auth->new() issues an HTTP request to a Keystone endpoint with expected credentials");
         }
 
-        my $content = JSON::XS::decode_json($ua->{'responses'}->[0]->content);
+        my $content = JSON::decode_json($ua->{'responses'}->[0]->content);
 
         {
             my $got      = $auth->response;
@@ -182,7 +182,7 @@ Test::OpenStack::Client->run_auth_tests({
         );
 
         my $got      = $client->endpoint;
-        my $expected = JSON::XS::decode_json($full_content)
+        my $expected = JSON::decode_json($full_content)
             ->{'access'}
             ->{'serviceCatalog'}
             ->[0]
@@ -205,7 +205,7 @@ Test::OpenStack::Client->run_auth_tests({
         );
 
         my $got      = $client->endpoint;
-        my $expected = JSON::XS::decode_json($full_content)
+        my $expected = JSON::decode_json($full_content)
             ->{'access'}
             ->{'serviceCatalog'}
             ->[0]
@@ -228,7 +228,7 @@ Test::OpenStack::Client->run_auth_tests({
         );
 
         my $got      = $client->endpoint;
-        my $expected = JSON::XS::decode_json($full_content)
+        my $expected = JSON::decode_json($full_content)
             ->{'access'}
             ->{'serviceCatalog'}
             ->[0]

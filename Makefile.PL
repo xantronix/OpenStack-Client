@@ -14,7 +14,7 @@ WriteMakefile(
     'ABSTRACT'     => 'A nice and tiny OpenStack API client',
 
     'BUILD_REQUIRES' => {
-        'JSON::XS'       => 0,
+        'JSON'           => 0,
         'HTTP::Request'  => 0,
         'LWP::UserAgent' => 0,
         'URI::Encode'    => 0
@@ -23,5 +23,19 @@ WriteMakefile(
     'TEST_REQUIRES' => {
         'Test::More'      => 0,
         'Test::Exception' => 0
+    },
+
+    'META_MERGE' => {
+        'meta-spec' => {
+            'version' => 2
+        },
+
+        'resources' => {
+            'repository' => {
+                'type' => 'git',
+                'url'  => 'https://github.com/xantronix/openstack-client.git',
+                'web'  => 'https://github.com/xantronix/openstack-client'
+            }
+        }
     }
 );

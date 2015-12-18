@@ -14,10 +14,10 @@ use warnings;
 use HTTP::Request  ();
 use LWP::UserAgent ();
 
-use JSON::XS    ();
+use JSON        ();
 use URI::Encode ();
 
-our $VERSION = '1.0000_0000';
+our $VERSION = '1.0000';
 
 =encoding utf8
 
@@ -212,7 +212,7 @@ sub call ($$$$) {
         $request->header($name => $value);
     }
 
-    $request->content(JSON::XS::encode_json($body)) if defined $body;
+    $request->content(JSON::encode_json($body)) if defined $body;
 
     my $response = $self->{'ua'}->request($request);
     my $type     = $response->header('Content-Type');
@@ -225,7 +225,7 @@ sub call ($$$$) {
     }
 
     if (lc($type) =~ qr{^application/json}i && defined $content && length $content) {
-        return JSON::XS::decode_json($content);
+        return JSON::decode_json($content);
     } else {
         return $content;
     }

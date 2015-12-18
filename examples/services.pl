@@ -1,4 +1,12 @@
 #! /usr/bin/perl
+#
+# Copyright (c) 2015 cPanel, Inc.
+# All rights reserved.
+# http://cpanel.net/
+#
+# Distributed under the terms of the MIT license.  See the LICENSE file for
+# further details.
+#
 
 use strict;
 use warnings;

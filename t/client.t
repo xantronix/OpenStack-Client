@@ -15,7 +15,7 @@ use Carp;
 
 use OpenStack::Client ();
 
-use JSON::XS ();
+use JSON ();
 
 use lib 't/lib';
 use Test::OpenStack::Client ();
@@ -61,7 +61,7 @@ use Test::Exception;
 
 Test::OpenStack::Client->run_client_tests({
     'responses' => [{
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'foo' => 'bar'
         })
     }],
@@ -108,7 +108,7 @@ Test::OpenStack::Client->run_client_tests({
         $client->call('GET' => '/foo', $content);
 
         my $got      = $ua->{'requests'}->[0]->content;
-        my $expected = JSON::XS::encode_json($content);
+        my $expected = JSON::encode_json($content);
 
         is_deeply($got => $expected, "\$client decodes JSON response bodies");
     }
@@ -211,7 +211,7 @@ Test::OpenStack::Client->run_client_tests({
     }
 }, {
     'responses' => [{
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'payload' => ['foo', 'bar', 'baz']
         })
     }],
@@ -240,7 +240,7 @@ Test::OpenStack::Client->run_client_tests({
     }
 }, {
     'responses' => [{
-        'content' => JSON::XS::encode_json({})
+        'content' => JSON::encode_json({})
     }],
 
     'test' => sub {
@@ -259,7 +259,7 @@ Test::OpenStack::Client->run_client_tests({
     }
 }, {
     'responses' => [{
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'items' => [{
                 'foo'  => 'bar'
             }],
@@ -267,7 +267,7 @@ Test::OpenStack::Client->run_client_tests({
             'next' => '/foo/1'
         })
     }, {
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'items' => [{
                 'baz' => 'boo'
             }],
@@ -275,7 +275,7 @@ Test::OpenStack::Client->run_client_tests({
             'next' => '/foo/2'
         })
     }, {
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'items' => [{
                 'meow' => 'cats'
             }]
@@ -305,7 +305,7 @@ Test::OpenStack::Client->run_client_tests({
     }
 }, {
     'responses' => [{
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'items' => ['foo', 'bar', 'baz']
         })
     }],
@@ -346,12 +346,12 @@ Test::OpenStack::Client->run_client_tests({
     }
 }, {
     'responses' => [{
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'items' => ['foo', 'bar', 'baz'],
             'next'  => '/foo/2'
         })
     }, {
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'items' => ['eins', 'zwei', 'drei']
         })
     }],
@@ -370,7 +370,7 @@ Test::OpenStack::Client->run_client_tests({
     }
 }, {
     'responses' => [{
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'items' => []
         })
     }],
@@ -391,11 +391,11 @@ Test::OpenStack::Client->run_client_tests({
     }
 }, {
     'responses' => [{
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'bar' => 'baz'
         })
     }, {
-        'content' => JSON::XS::encode_json({
+        'content' => JSON::encode_json({
             'meow' => 'cats'
         })
     }],
