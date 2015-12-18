@@ -154,3 +154,8 @@ endpoint client.
 # AUTHOR
 
 Written by Alexandra Hrefna Hilmisdóttir &lt;xan@cpanel.net>
+
+# COPYRIGHT
+
+Copyright (c) 2015 cPanel, Inc.  Released under the terms of the MIT license.
+See LICENSE for further details.
