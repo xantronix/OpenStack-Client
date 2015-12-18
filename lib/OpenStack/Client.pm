@@ -1,3 +1,11 @@
+#
+# Copyright (c) 2015 cPanel, Inc.
+# All rights reserved.
+# http://cpanel.net/
+#
+# Distributed under the terms of the MIT license.  See the LICENSE file for
+# further details.
+#
 package OpenStack::Client;
 
 use strict;
@@ -9,10 +17,7 @@ use LWP::UserAgent ();
 use JSON::XS    ();
 use URI::Encode ();
 
-our $VERSION = 0.0010;
-
-our $HTTP_UA      = 'LWP::UserAgent';
-our $HTTP_REQUEST = 'HTTP::Request';
+our $VERSION = '1.0000_0000';
 
 =encoding utf8
 
@@ -94,16 +99,21 @@ sub new ($%) {
 
     die('No API endpoint provided') unless $endpoint;
 
-    my $ua = $HTTP_UA->new(
+    $opts{'package_ua'}      ||= 'LWP::UserAgent';
+    $opts{'package_request'} ||= 'HTTP::Request';
+
+    my $ua = $opts{'package_ua'}->new(
         'ssl_opts' => {
             'verify_hostname' => 0
         }
     );
 
     return bless {
-        'ua'       => $ua,
-        'endpoint' => $endpoint,
-        'token'    => $opts{'token'}
+        'package_ua'      => $opts{'package_ua'},
+        'package_request' => $opts{'package_request'},
+        'ua'              => $ua,
+        'endpoint'        => $endpoint,
+        'token'           => $opts{'token'}
     }, $class;
 }
 
@@ -136,13 +146,15 @@ sub token ($) {
     shift->{'token'};
 }
 
-sub uri ($$$) {
+sub uri ($$) {
     my ($self, $path) = @_;
 
     return join '/', map {
-        s/^\///;
-        s/\/$//;
-        $_
+        my $part = $_;
+
+        $part =~ s/^\///;
+        $part =~ s/\/$//;
+        $part
     } $self->{'endpoint'}, $path;
 }
 
@@ -177,7 +189,7 @@ current call.
 sub call ($$$$) {
     my ($self, $method, $path, $body) = @_;
 
-    my $request = $HTTP_REQUEST->new(
+    my $request = $self->{'package_request'}->new(
         $method => $self->uri($path)
     );
 
@@ -193,8 +205,6 @@ sub call ($$$$) {
 
     my $count = scalar @headers;
 
-    die('Uneven number of header elements') if $count % 2 != 0;
-
     for (my $i=0; $i<$count; $i+=2) {
         my $name  = $headers[$i];
         my $value = $headers[$i+1];
@@ -206,20 +216,19 @@ sub call ($$$$) {
 
     my $response = $self->{'ua'}->request($request);
     my $type     = $response->header('Content-Type');
-
-    if ($response->code =~ /^2\d{2}$/) {
-        if (lc($type) =~ qr{^application/json}i) {
-            return JSON::XS::decode_json($response->decoded_content);
-        } else {
-            return $response->decoded_content;
-        }
-    }
+    my $content  = $response->decoded_content;
 
     if ($response->code =~ /^[45]\d{2}$/) {
-        die($response->decoded_content);
+        $content ||= "@{[$response->code]} Unknown error";
+
+        die($content);
     }
 
-    return $response->message;
+    if (lc($type) =~ qr{^application/json}i && defined $content && length $content) {
+        return JSON::XS::decode_json($content);
+    } else {
+        return $content;
+    }
 }
 
 =back
@@ -436,6 +445,11 @@ The OpenStack Keystone authentication and authorization interface
 =head1 AUTHOR
 
 Written by Alexandra Hrefna Hilmisdóttir <xan@cpanel.net>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2015 cPanel, Inc.  Released under the terms of the MIT license.
+See LICENSE for further details.
 
 =cut
 

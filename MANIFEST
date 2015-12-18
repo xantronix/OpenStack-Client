@@ -1,3 +1,4 @@
+LICENSE
 MANIFEST
 Makefile.PL
 README.md
@@ -5,3 +6,10 @@ examples/images.pl
 examples/services.pl
 lib/OpenStack/Client/Auth.pm
 lib/OpenStack/Client.pm
+t/lib/Test/OpenStack/Client.pm
+t/lib/Test/OpenStack/Client/Message.pm
+t/lib/Test/OpenStack/Client/Request.pm
+t/lib/Test/OpenStack/Client/Response.pm
+t/lib/Test/OpenStack/Client/UserAgent.pm
+t/client.t
+t/auth.t

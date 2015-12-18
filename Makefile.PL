@@ -18,5 +18,10 @@ WriteMakefile(
         'HTTP::Request'  => 0,
         'LWP::UserAgent' => 0,
         'URI::Encode'    => 0
+    },
+
+    'TEST_REQUIRES' => {
+        'Test::More'      => 0,
+        'Test::Exception' => 0
     }
 );
