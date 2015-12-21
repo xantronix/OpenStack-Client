@@ -284,12 +284,12 @@ sub service ($$%) {
     foreach my $service (@{$self->{'services'}}) {
         next unless $type eq $service->{'type'};
 
-        next if defined $opts{'id'}     && $service->{'id'}     ne $opts{'id'};
-        next if defined $opts{'region'} && $service->{'region'} ne $opts{'region'};
-
         my $uri;
 
         foreach my $endpoint (@{$service->{'endpoints'}}) {
+            next if defined $opts{'id'}     && $endpoint->{'id'}     ne $opts{'id'};
+            next if defined $opts{'region'} && $endpoint->{'region'} ne $opts{'region'};
+
             if ($opts{'endpoint'} eq 'public') {
                 $uri = $endpoint->{'publicURL'};
             } elsif ($opts{'endpoint'} eq 'internal') {

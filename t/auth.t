@@ -74,19 +74,19 @@ my $full_content = JSON::encode_json({
         },
 
         'serviceCatalog' => [{
-            'id'        => 'deadbeef',
-            'region'    => 'Papua New Guinea',
             'type'      => 'image',
             'endpoints' => [{
+                'id'          => 'deadbeef',
+                'region'      => 'Papua New Guinea',
                 'publicURL'   => 'http://foo.bar/public/image/v2',
                 'internalURL' => 'http://foo.bar/internal/image/v2',
                 'adminURL'    => 'http://foo.bar/admin/image/v2'
             }]
         }, {
-            'id'        => 'cafebabe',
-            'region'    => 'Morocco',
             'type'      => 'image',
             'endpoints' => [{
+                'id'          => 'cafebabe',
+                'region'      => 'Morocco',
                 'publicURL'   => 'http://meow.cats/public/image/v2',
                 'internalURL' => 'http://meow.cats/internal/image/v2',
                 'adminURL'    => 'http://meow.cats/admin/image/v2'
