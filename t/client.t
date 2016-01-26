@@ -436,4 +436,56 @@ Test::OpenStack::Client->run_client_tests({
             $i++;
         }
     }
+}, {
+    'test' => sub {
+        my ($client, $ua) = @_;
+
+        no warnings qw/redefine/;
+        my $orig_request = \&Test::OpenStack::Client::UserAgent::request;
+
+        my $req_headers;
+
+        local *Test::OpenStack::Client::UserAgent::request = sub {
+          my ($self, $request) = @_;
+          # save headers for easy comparing 
+          $req_headers = $request->{'headers'};
+          return $orig_request->($self, $request);
+        };
+
+        my @got_responses = ();
+        my $headers = {
+            'content-type'    => 'foobar', 'x-grumpy-cat' => '0 ftg',
+        };
+
+        my $response;
+        lives_ok {
+            $response = $client->call('PATCH', $headers, '/foo', {'bar' => 'baz'});
+        } "\$client->call() doesn't die when called normally with 4 arguments (including \$headers)";
+        
+        # expected/defaults for comparing 
+        $headers->{'accept-encoding'} = 'identity, gzip, deflate, compress';
+        $headers->{'content-length'} = 0;
+        $headers->{'accept'} = 'application/json, text/plain';
+
+        is_deeply $req_headers => $headers, "4 argument form of \$client->call() sets headers as expected.";
+
+        delete $headers->{'content-length'};
+        delete $headers->{'x-grumpy-cat'};
+
+        # change defaults for comparing 
+        $headers->{'accept-encoding'} = 'I have no idea what I am doing.';
+        $headers->{'accept'} = 'The honeybadger accepts it all!';
+        $headers->{'content-type'} = 'application/openstack-images-v2.1-json-patch'; 
+        $headers->{'x-ftg'} = 0;
+
+        $req_headers = {};
+        lives_ok {
+            $response = $client->call('PATCH', $headers, '/foo', {'bar' => 'baz'});
+        } "\$client->call() doesn't die when called normally with 4 arguments (including \$headers)";
+
+        # add this expected header for comparing
+        $headers->{'content-length'} = 0;
+
+        is_deeply $req_headers => $headers, "4 argument form of \$client->call() sets headers as expected.";
+    }
 });
