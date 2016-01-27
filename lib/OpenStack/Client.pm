@@ -179,6 +179,46 @@ body.  This method may return the following:
 
 =back
 
+=item C<$client-E<gt>call(I<$method>, I<$headers>, I<$path>, I<$body>)>
+
+There exists a second form of C<call> that allows one to pass in
+I<$headers> as an optional input parameter (hash reference), which
+allows one to directly modify the following headers sent along with
+the request; when used, I<$headers> must be placed in the second
+position after I<$method>.
+
+=over
+
+=item Accept
+
+Defaults to C<application/json, text/plain>.
+
+=item Accept-Encoding
+
+Defaults to C<identity, gzip, deflate, compress>.
+
+=item Content-Type
+
+Defaults to C<application/json>, although some API calls (e.g., a PATCH)
+expect a different type; the the case of an image update, the expected
+type is C<application/openstack-images-v2.1-json-patch> or some version
+thereof.
+
+For example, the following shows how one may update image metadata using
+the PATCH method supported by version 2 of the Image API. 
+
+In the example, C<@image_updates> is an array of hash references of the
+structure defined by the PATCH RFC (6902) governing "JavaScript Object
+Notation (JSON) Patch"; i.e., operations consisting of C<add>, C<replace>,
+or C<delete>.
+
+  my $headers  = { 'Content-Type' => 'application/openstack-images-v2.1-json-patch' };
+  my $response = $glance->call( q{PATCH}, $headers, qq[/v2/images/$image->{id}], \@image_updates )
+
+=back
+
+And except for C<X-Auth-Token>, any additional token will be added to the request.
+
 In exceptional conditions (such as when the service returns a 4xx or 5xx HTTP
 response), the client will C<die()> with the raw text response from the HTTP
 service, indicating the nature of the service-side failure to service the
@@ -186,22 +226,36 @@ current call.
 
 =cut
 
-sub call ($$$$) {
-    my ($self, $method, $path, $body) = @_;
+sub call ($$$$$) {
+    my $self = shift;
+
+    my ($method, $path, $body);
+    my $headers = {};
+
+    # if 4 arguments, $headers is in the second position after $method
+    if (scalar @_ == 4) {
+      ($method, $headers, $path, $body) = @_;
+    }
+    # original case, do not check @_ count
+    else {
+      ($method, $path, $body) = @_;
+    }
 
     my $request = $self->{'package_request'}->new(
         $method => $self->uri($path)
     );
 
     my @headers = (
-        'Accept'          => 'application/json, text/plain',
-        'Accept-Encoding' => 'identity, gzip, deflate, compress',
-        'Content-Type'    => 'application/json'
+        'Accept'          => $headers->{'Accept'}          // 'application/json, text/plain',
+        'Accept-Encoding' => $headers->{'Accept-Encoding'} // 'identity, gzip, deflate, compress',
+        'Content-Type'    => $headers->{'Content-Type'}    // 'application/json'
     );
 
-    push @headers, (
-        'X-Auth-Token' => $self->{'token'}->{'id'}
-    ) if defined $self->{'token'}->{'id'};
+    foreach my $header (grep( !/^Accept$|^Accept\-Encoding$|^Content\-Type$/, keys %{$headers})) {
+        push @headers, $header => $headers->{$header};
+    }
+
+    push @headers, ( 'X-Auth-Token' => $self->{'token'}->{'id'} ) if defined $self->{'token'}->{'id'};
 
     my $count = scalar @headers;
 
@@ -215,6 +269,7 @@ sub call ($$$$) {
     $request->content(JSON::encode_json($body)) if defined $body;
 
     my $response = $self->{'ua'}->request($request);
+
     my $type     = $response->header('Content-Type');
     my $content  = $response->decoded_content;
 
@@ -266,7 +321,7 @@ sub get ($$%) {
         # subsequent values with a & rather than ?.
         #
         if ($path =~ /\?/) {
-            $path .= "&$params"
+            $path .= "&$params";
         } else {
             $path .= "?$params";
         }
