@@ -526,6 +526,14 @@ The OpenStack Keystone authentication and authorization interface
 
 Written by Alexandra Hrefna Hilmisdóttir <xan@cpanel.net>
 
+=head1 CONTRIBUTORS
+
+=over
+
+=item Brett Estrade <brett@cpanel.net>
+
+=back
+
 =head1 COPYRIGHT
 
 Copyright (c) 2015 cPanel, Inc.  Released under the terms of the MIT license.
