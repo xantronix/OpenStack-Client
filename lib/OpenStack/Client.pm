@@ -216,12 +216,18 @@ structure defined by the PATCH RFC (6902) governing "JavaScript Object
 Notation (JSON) Patch"; i.e., operations consisting of C<add>, C<replace>,
 or C<delete>.
 
-  my $headers  = { 'Content-Type' => 'application/openstack-images-v2.1-json-patch' };
-  my $response = $glance->call( q{PATCH}, $headers, qq[/v2/images/$image->{id}], \@image_updates )
+    my $headers  = {
+        'Content-Type' => 'application/openstack-images-v2.1-json-patch'
+    };
+
+    my $response = $glance->call('PATCH', $headers,
+        qq[/v2/images/$image->{id}], \@image_updates
+    );
 
 =back
 
-And except for C<x-auth-token>, any additional token will be added to the request.
+And except for C<X-Auth-Token>, any additional token will be added to the
+request.
 
 In exceptional conditions (such as when the service returns a 4xx or 5xx HTTP
 response), the client will C<die()> with the raw text response from the HTTP
@@ -280,18 +286,18 @@ sub call {
     }
 }
 
-# internal method for call() to process headers; returns a list of hash references - one for each header/value
+#
+# Internal method for call() to process headers; returns a list of hash
+# references - one for each header/value
+#
 sub _get_headers_list {
     my ($self, $headers) = @_;
 
-    # place to store supplied headers with lowercase keys 
-    my $lc_headers = {};
-
-    # lowercase supplied headers so we know what to add in place of our default headers lc key collisions go to last set 
-    foreach my $header (keys %{$headers}) {
-        my $lc_header = lc $header;
-        $lc_headers->{$lc_header} = $headers->{$header};
-    }
+    my $lc_headers = {
+        map {
+            lc $_ => $headers->{$_}
+        } keys %{$headers}
+    };
 
     # default set of headers, set defaults if not specified explicitly
     my @headers = (
