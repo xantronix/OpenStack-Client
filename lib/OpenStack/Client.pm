@@ -28,11 +28,14 @@ OpenStack::Client - A cute little client to OpenStack services
 =head1 SYNOPSIS
 
     #
-    # First, connect to an API endpoint via the Keystone authorization service
+    # First, connect to an API endpoint via the Keystone
+    # authorization service
     #
     use OpenStack::Client::Auth ();
 
-    my $auth = OpenStack::Client::Auth->new('http://openstack.foo.bar:5000/v2.0',
+    my $endpoint = 'http://openstack.foo.bar:5000/v2.0';
+
+    my $auth = OpenStack::Client::Auth->new($endpoint,
         'tenant'   => $ENV{'OS_TENANT_NAME'},
         'username' => $ENV{'OS_USERNAME'},
         'password' => $ENV{'OS_PASSWORD'}
@@ -49,7 +52,9 @@ OpenStack::Client - A cute little client to OpenStack services
     #
     use OpenStack::Client ();
 
-    my $glance = OpenStack::Client->new('http://glance.foo.bar:9292',
+    my $endpoint = 'http://glance.foo.bar:9292';
+
+    my $glance = OpenStack::Client->new($endpoint,
         'token' => {
             'id' => 'foo'
         }
@@ -226,8 +231,7 @@ or C<delete>.
 
 =back
 
-And except for C<X-Auth-Token>, any additional token will be added to the
-request.
+Except for C<X-Auth-Token>, any additional token will be added to the request.
 
 In exceptional conditions (such as when the service returns a 4xx or 5xx HTTP
 response), the client will C<die()> with the raw text response from the HTTP
