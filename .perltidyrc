@@ -1,0 +1,20 @@
+--iterations=4
+--default-tabsize=4
+--paren-tightness=2
+--brace-tightness=2
+--square-bracket-tightness=2
+--opening-brace-always-on-right
+--nospace-for-semicolon
+--nooutdent-long-quotes
+--cuddled-else
+--cuddled-blocks
+--break-at-old-comma-breakpoints
+--break-at-old-ternary-breakpoints
+--nowant-left-space='? :'
+--fixed-position-side-comment=1
+--vertical-tightness=1
+--vertical-tightness-closing=1
+--continuation-indentation=2
+--format-skipping
+--format-skipping-begin='#\s*tidyoff'
+--format-skipping-end='#\s*tidyon'
