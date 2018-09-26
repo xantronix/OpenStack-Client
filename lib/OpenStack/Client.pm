@@ -102,7 +102,7 @@ A token obtained from a L<OpenStack::Client::Auth> object.
 sub new ($%) {
     my ($class, $endpoint, %opts) = @_;
 
-    die('No API endpoint provided') unless $endpoint;
+    die 'No API endpoint provided' unless $endpoint;
 
     $opts{'package_ua'}      ||= 'LWP::UserAgent';
     $opts{'package_request'} ||= 'HTTP::Request';
@@ -184,6 +184,10 @@ body.  This method may return the following:
 
 =back
 
+I<$body> may be supplied as a C<CODE> reference which, when called, will return
+a chunk of data to be supplied to the API endpoint.  The stream is ended when
+the supplied subroutine returns an empty string or undef.
+
 =item C<$client-E<gt>call(I<$method>, I<$headers>, I<$path>, I<$body>)>
 
 There exists a second form of C<call> that allows one to pass in
@@ -195,6 +199,10 @@ position after I<$method>.
 Headers are case I<insensitive>, and if one sets duplicate headers, one of
 them will get set; but there are no guarantess which one will. Repeat
 headers at your own risk.
+
+I<$body> may be supplied as a C<CODE> reference which, when called, will return
+a chunk of data to be supplied to the API endpoint.  The stream is ended when
+the supplied subroutine returns an empty string or undef.
 
 =over
 
@@ -234,7 +242,7 @@ or C<delete>.
 Except for C<X-Auth-Token>, any additional token will be added to the request.
 
 In exceptional conditions (such as when the service returns a 4xx or 5xx HTTP
-response), the client will C<die()> with the raw text response from the HTTP
+response), the client will die with the raw text response from the HTTP
 service, indicating the nature of the service-side failure to service the
 current call.
 
@@ -270,7 +278,19 @@ sub call {
         $request->header($name => $value);
     }
 
-    $request->content(JSON::encode_json($body)) if defined $body;
+    if (defined $body) {
+        #
+        # Allow the request body to be supplied by a subroutine reference
+        # which, when called, will supply a chunk of data returned as per the
+        # behavior of LWP::UserAgent.  This is useful for uploading arbitrary
+        # amounts of data in a request body.
+        #
+        if (ref($body) =~ /CODE/) {
+            $request->content($body);
+        } else {
+            $request->content(JSON::encode_json($body));
+        }
+    }
 
     my $response = $self->{'ua'}->request($request);
 
@@ -280,7 +300,7 @@ sub call {
     if ($response->code =~ /^[45]\d{2}$/) {
         $content ||= "@{[$response->code]} Unknown error";
 
-        die($content);
+        die $content;
     }
 
     if (lc($type) =~ qr{^application/json}i && defined $content && length $content) {
@@ -290,35 +310,53 @@ sub call {
     }
 }
 
+sub _lc_merge {
+    my ($a, $b, %opts) = @_;
+
+    my %lc_keys_a = map {
+        lc $_ => $_
+    } keys %{$a};
+
+    foreach my $key_b (keys %{$b}) {
+        my $key_a = $lc_keys_a{lc $key_b};
+
+        if (!defined($key_a)) {
+            $a->{$key_b} = $b->{$key_b};
+        } elsif (exists $a->{$key_a} && $opts{'replace'}) {
+            $a->{$key_a} = $b->{$key_b};
+        }
+    }
+
+    return;
+}
+
 #
-# Internal method for call() to process headers; returns a list of hash
-# references - one for each header/value
+# Internal method for call() to process headers; returns a list of header name
+# and value pairs
 #
 sub _get_headers_list {
     my ($self, $headers) = @_;
 
-    my $lc_headers = {
-        map {
-            lc $_ => $headers->{$_}
-        } keys %{$headers}
-    };
-
-    # default set of headers, set defaults if not specified explicitly
-    my @headers = (
-        'Accept'          => $lc_headers->{'accept'}          // 'application/json, text/plain',
-        'Accept-Encoding' => $lc_headers->{'accept-encoding'} // 'identity, gzip, deflate, compress',
-        'Content-Type'    => $lc_headers->{'content-type'}    // 'application/json'
+    my %DEFAULTS = (
+        'Accept'          => 'application/json, text/plain',
+        'Accept-Encoding' => 'identity, gzip, deflate, compress',
+        'Content-Type'    => 'application/json'
     );
 
-    # add all we don't care about 
-    foreach my $header (grep( !/^Accept$|^Accept\-Encoding$|^Content\-Type$|^X-Auth-Token$/i, keys %{$lc_headers})) {
-        push @headers, $header => $lc_headers->{$header};
-    }
+    #
+    # The client should be not adding X-Auth-Token explicitly, so force it to
+    # the one received during authentication
+    #
+    my %OVERRIDES = (
+        'X-Auth-Token' => $self->{'token'}->{'id'}
+    );
 
-    # client should be not adding X-Auth-Token explicitly, so force it to the one received during authentication
-    push @headers, ( 'X-Auth-Token' => $self->{'token'}->{'id'} ) if defined $self->{'token'}->{'id'};
+    my %new_headers = %{$headers};
 
-    return @headers;
+    _lc_merge(\%new_headers, \%DEFAULTS);
+    _lc_merge(\%new_headers, \%OVERRIDES, 'replace' => 1);
+
+    return %new_headers;
 }
 
 =back
@@ -387,7 +425,7 @@ sub each ($$@) {
     } elsif (scalar @args == 1) {
         ($callback) = @args;
     } else {
-        die('Invalid number of arguments');
+        die 'Invalid number of arguments';
     }
 
     while (defined $path) {
@@ -424,14 +462,14 @@ sub every ($$$@) {
     } elsif (scalar @args == 1) {
         ($callback) = @args;
     } else {
-        die('Invalid number of arguments');
+        die 'Invalid number of arguments';
     }
 
     while (defined $path) {
         my $result = $self->get($path, %{$opts});
 
         unless (defined $result->{$attribute}) {
-            die("Response from $path does not contain attribute '$attribute'");
+            die "Response from $path does not contain attribute '$attribute'";
         }
 
         foreach my $item (@{$result->{$attribute}}) {
