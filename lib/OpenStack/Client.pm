@@ -17,7 +17,7 @@ use LWP::UserAgent ();
 use JSON        ();
 use URI::Encode ();
 
-our $VERSION = '1.0002';
+our $VERSION = '1.0003';
 
 =encoding utf8
 
