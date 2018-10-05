@@ -205,7 +205,7 @@ Defaults to C<identity, gzip, deflate, compress>.
 =item Content-Type
 
 Defaults to C<application/json>, although some API calls (e.g., a PATCH)
-expect a different type; the the case of an image update, the expected
+expect a different type; the case of an image update, the expected
 type is C<application/openstack-images-v2.1-json-patch> or some version
 thereof.
 
