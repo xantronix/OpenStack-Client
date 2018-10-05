@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015 cPanel, Inc.
+# Copyright (c) 2018 cPanel, Inc.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -17,7 +17,7 @@ use LWP::UserAgent ();
 use JSON        ();
 use URI::Encode ();
 
-our $VERSION = '1.0003';
+our $VERSION = '1.0004';
 
 =encoding utf8
 
