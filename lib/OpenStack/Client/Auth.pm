@@ -63,6 +63,22 @@ The OpenStack user name
 
 The OpenStack password
 
+=item * B<version>
+
+The version of the Glance API to negotiate with.  Default is C<2.0>, but
+C<3> is also accepted.
+
+=item * B<scope>
+
+When negotiating with an Identity v3 endpoint, the information provided here
+is passed in the B<scope> property of the B<auth> portion of the request body
+submitted to the endpoint.
+
+=item * B<domain>
+
+When negotiating with an Identity v3 endpoint, the name of the domain to
+authenticate to.
+
 =back
 
 When successful, this method will return an object containing the following:
