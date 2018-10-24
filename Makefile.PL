@@ -7,15 +7,12 @@
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-    'NAME'         => 'OpenStack::Client',
-    'VERSION_FROM' => 'lib/OpenStack/Client.pm',
-    'AUTHOR'       => 'Alexandra Hrefna Hilmisdóttir <xan@cpanel.net>',
-    'LICENSE'      => 'mit',
-    'ABSTRACT'     => 'A nice and tiny OpenStack API client',
-
-    'PREREQ_PM' => {
-        'perl' => '5.14.0'
-    },
+    'NAME'             => 'OpenStack::Client',
+    'VERSION_FROM'     => 'lib/OpenStack/Client.pm',
+    'AUTHOR'           => 'Alexandra Hrefna Hilmisdóttir <xan@cpanel.net>',
+    'LICENSE'          => 'mit',
+    'ABSTRACT'         => 'A nice and tiny OpenStack API client',
+    'MIN_PERL_VERSION' => '5.14.0',
 
     'BUILD_REQUIRES' => {
         'JSON'           => 0,
