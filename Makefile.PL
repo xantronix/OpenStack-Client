@@ -13,6 +13,10 @@ WriteMakefile(
     'LICENSE'      => 'mit',
     'ABSTRACT'     => 'A nice and tiny OpenStack API client',
 
+    'PREREQ_PM' => {
+        'perl' => '5.14.0'
+    },
+
     'BUILD_REQUIRES' => {
         'JSON'           => 0,
         'HTTP::Request'  => 0,
