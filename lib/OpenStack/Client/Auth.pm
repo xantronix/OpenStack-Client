@@ -29,6 +29,14 @@ OpenStack::Client::Auth - OpenStack Keystone authentication and authorization
         'password' => $ENV{'OS_PASSWORD'}
     );
 
+    # or you can also use API v3
+    $auth = OpenStack::Client::Auth->new(
+        $ENV{OS_AUTH_URL},
+        'username' => $ENV{'OS_USERNAME'},
+        'password' => $ENV{'OS_PASSWORD'},
+        'version'  => 3
+    );
+
     my $glance = $auth->service('image',
         'region' => $ENV{'OS_REGION_NAME'}
     );
