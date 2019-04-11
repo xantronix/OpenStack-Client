@@ -16,7 +16,6 @@ use OpenStack::Client ();
 sub new ($$%) {
     my ($class, $endpoint, %args) = @_;
 
-    die 'No OpenStack tenant name provided in "tenant"' unless defined $args{'tenant'};
     die 'No OpenStack username provided in "username"'  unless defined $args{'username'};
     die 'No OpenStack password provided in "password"'  unless defined $args{'password'};
 
