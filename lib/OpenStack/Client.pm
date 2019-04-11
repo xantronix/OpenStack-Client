@@ -515,7 +515,8 @@ sub every ($$$@) {
         my $result = $self->get($path, %{$opts});
 
         unless (defined $result->{$attribute}) {
-            die "Response from $path does not contain attribute '$attribute'";
+            my $keys = join( ', ', sort keys %$result );
+            die "Response from $path does not contain attribute '$attribute', possible options are " . $keys;
         }
 
         foreach my $item (@{$result->{$attribute}}) {
