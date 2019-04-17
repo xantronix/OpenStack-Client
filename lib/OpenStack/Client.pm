@@ -20,6 +20,7 @@ use URI::Encode ();
 use OpenStack::Client::Response ();
 
 our $VERSION = '1.0005';
+our $DEBUG   = 0;
 
 =encoding utf8
 
@@ -180,8 +181,11 @@ sub request {
 
     $args{'headers'} ||= {};
 
+    my $uri = $self->uri($args{'path'});
+    debug( $args{'method'}, $uri );
+
     my $request = $self->{'package_request'}->new(
-        $args{'method'} => $self->uri($args{'path'})
+        $args{'method'} => $uri
     );
 
     my @headers = $self->_get_headers_list($args{'headers'});
@@ -205,7 +209,9 @@ sub request {
         if (ref($args{'body'}) =~ /CODE/) {
             $request->content($args{'body'});
         } else {
-            $request->content(JSON::encode_json($args{'body'}));
+            my $body_as_json = JSON::encode_json($args{'body'});
+            debug( "BODY:", $body_as_json );
+            $request->content( $body_as_json );
         }
     }
 
@@ -603,6 +609,49 @@ sub delete ($$) {
 
     return $self->call('DELETE' => $path);
 }
+
+=back
+
+=head1 DEBUGGING
+
+=over
+
+=item C<$Openstack::Client::DEBUG>
+
+You can enable some debug informations to track performed requests by setting
+C<$Openstack::Client::DEBUG> to a true value
+
+Example:
+
+    {
+        local $Openstack::Client::DEBUG = 1;
+
+        my $auth = OpenStack::Client::Auth->new( ... );
+        my $api = $auth->service( ... );
+
+        $api->get('/v2.0/floatingips');
+    }
+
+    Will print some debug lines to STDERR
+
+    # POST http://service.***.tld:****/v3/auth/tokens
+    # BODY {"auth":{"scope":...}}
+    # GET http://service.***.tld:****/v2.0/floatingips
+
+=cut
+
+sub debug {
+    # void by default
+    my ( @msg ) = @_;
+
+    return unless $DEBUG;
+
+    my $txt = join( ' ', map { defined $_ ? $_ : 'undef' } '#', @msg );
+    print STDERR "$txt\n";
+
+    return;
+}
+
 
 =back
 
