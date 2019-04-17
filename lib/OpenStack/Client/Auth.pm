@@ -34,7 +34,14 @@ OpenStack::Client::Auth - OpenStack Keystone authentication and authorization
         $ENV{OS_AUTH_URL},
         'username' => $ENV{'OS_USERNAME'},
         'password' => $ENV{'OS_PASSWORD'},
-        'version'  => 3
+        'version'  => 3,
+        # provide a scope to get a catalog
+        'scope' => {
+            project => {
+                name => $ENV{'OS_PROJECT_NAME'},
+                domain => { id => 'default' },
+            }
+        }
     );
 
     my $glance = $auth->service('image',
