@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 cPanel, L.L.C.
+# Copyright (c) 2019 cPanel, L.L.C.
 # All rights reserved.
 # http://cpanel.net/
 #
@@ -19,7 +19,7 @@ use URI::Encode ();
 
 use OpenStack::Client::Response ();
 
-our $VERSION = '1.0005';
+our $VERSION = '1.0006';
 
 =encoding utf8
 
@@ -631,7 +631,7 @@ Written by Alexandra Hrefna Hilmisdóttir <xan@cpanel.net>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2018 cPanel, L.L.C.  Released under the terms of the MIT license.
+Copyright (c) 2019 cPanel, L.L.C.  Released under the terms of the MIT license.
 See LICENSE for further details.
 
 =cut
