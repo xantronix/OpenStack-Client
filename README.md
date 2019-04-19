@@ -232,7 +232,7 @@ references of the structure defined by the PATCH RFC (6902) governing
 
 # AUTHOR
 
-Written by Alexandra Hrefna Hilmisdóttir <xan@cpanel.net>
+Written by Alexandra Hrefna Maheu <xan@cpanel.net>
 
 # CONTRIBUTORS
 

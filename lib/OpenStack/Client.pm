@@ -619,7 +619,7 @@ The OpenStack Keystone authentication and authorization interface
 
 =head1 AUTHOR
 
-Written by Alexandra Hrefna Hilmisdóttir <xan@cpanel.net>
+Written by Alexandra Hrefna Maheu <xan@cpanel.net>
 
 =head1 CONTRIBUTORS
 
